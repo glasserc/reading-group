@@ -1,0 +1,117 @@
+* Reading group
+** Modeling
+Ground rule: If you don't understand something, ask as soon as possible -- it's probably my fault for not explaining it well. If there's something that it's OK not to understand, I'll say so, so assume that everything I said, I was trying to make you understand, and if I didn't succeed, I would like to know that.
+
+The Django tutorial I linked to isn't super great for beginners -- it's kind of targeted at experienced web developers. The goal for these first few weeks is to get us to a place where we have *something* up and running, so for now, it's OK not to understand all of that document. That said, I would love for people to learn/get practice with reading technical documentation. It's something of an art!
+
+The first part of building a web application in Django is defining the structure of your database, so we're going to spend some time talking about that today.
+*** What is a web application?
+At it's most fundamental level, a website is basically some HTML and some images. Some of you have probably already studied a little HTML and it's not really that interesting. In particular, it's static. It will keep staying the same until you write new HTML.
+
+A web application is a program that generates HTML when you visit, so that it can be *dynamic*, or have the potential for change. This makes it something that a user can interact with, without having to write HTML themselves.
+
+Django (and most similar software) anticipate that you will want to base your application on some data, and that application can manipulate that data, and that data is what the user sees and interacts with by interacting with your application. So it's: User <-> Application <-> Data.
+
+In order to make it easy for your application to manipulate data, it's stored in a database.
+*** What is a database?
+A database is another piece of software which is in charge of storing and organizing data[1]. We are going to be using a kind of database called a "relational" database (specifically we're going to start by using SQLite, but most databases that have "SQL" in the name function similarly).
+
+You can think of a relational database as kind of like an Excel workbook. A relational database has "tables", which are like sheets in a workbook. Each table is a collection of rows, each of which has the same set of columns. So you might have a "people" table that looks like this:
+
+| Person  | Number of pets | Signed up date |
+| Ethan   |              1 |     2015-05-01 |
+| Rita    |              0 |     2015-05-18 |
+| Francis |              1 |     2015-05-08 |
+
+And you might have another table that stores hobbies:
+
+| Person  | Hobby        |
+| Ethan   | Chiptune     |
+| Rita    | British rock |
+| Francis | Death metal  |
+| Ethan   | Baking       |
+| Francis | Kendo        |
+| Rick    | Beer         |
+
+If you had this data stored in a relational database, it would be possible to ask it to "put it together" and generate a table like this:
+
+| Person  | Number of pets | Number of hobbies |
+| Ethan   |              1 |                 2 |
+| Rita    |              0 |                 1 |
+| Francis |              1 |                 2 |
+
+"Relational" is a long word so I'll probably use it interchangeably with "SQL" (pronounced "sequel"), even though technically the two things aren't exactly the same.
+
+[1] This is a wild oversimplification, but "database" is a term that gets used a lot in a lot of contexts with subtly different meanings.
+*** Modeling
+When you're using Django (and probably when you're developing any kind of application), the first thing you do is think about what are the entities that you're going to have in your application, and how they relate to one another. For example, in a hospital management system, you might have patients and doctors and rooms, and patients stay in rooms and doctors visit patients (but doctors don't stay in rooms). Once you have a clear idea of what the entities are, you structure your database to support that. In Django, you write the structure of your database in a file called "models.py". You translate this structure into your actual database using the "python manage.py migrate" command.
+
+In the tutorial, they take the example of a "poll", which they define as being a "question" with a variable number of "answers". ("Variable" meaning that one question might have two answers, and another question might have three answers.)
+
+[Side note: Let's say I created my table to be like this:
+
+| Question text | Publication date | Choice 1 text | Choice 1 votes | Choice 2 text | Choice 2 votes | Choice 3 text | Choice 3 votes |
+| What's up?    |       2015-05-01 | Not much      |              0 | The sky       |              0 | Just hacking  | 0              |
+
+In doing this, I'm asserting that EVERY question have exactly 3 choices! Clearly they can't have more choices because there's no where to put them, but it's also true that they can't have less choices because what will I put in the 3rd choice?
+
+In other words, notice that columns are *constant* in a relational model, so if you want to have a variable number of something, you have to turn those somethings into rows somehow.]
+*** Demo
+Once you have your models set up, you can create Python objects and make them go into the database, and similarly you can get things out of the database as Python objects. This might not be impressive, but it's the same thing your application is going to do when users interact with it.
+
+You can access the database your program created using the "sqlite3" command (which you might have to install using apt-get or yum or something). This part isn't super important because Django mostly insulates you from it, but I thought it might be interesting to see what's going on "underneath the hood", and sometimes this is useful for debugging.
+
+In sqlite, you can do .tables to show the tables. A table was created for "polls_question" and another for "polls_choice". You can see what the "schema" (table structure) for a table was using e.g. ".schema polls_question". You can also see what is in your database using a SELECT statement.
+
+#+begin_src
+sqlite> select * from polls_question;
+1|What's new?|2015-05-18 04:33:32.860786
+2|Should I go to work today?|2015-05-18 04:34:51.572901
+
+sqlite> .schema polls_choice
+CREATE TABLE "polls_choice" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "choice_text" varchar(200) NOT NULL, "votes" integer NOT NULL, "question_id" integer NOT NULL REFERENCES "polls_question" ("id"));
+CREATE INDEX "polls_choice_7aa0f6ee" ON "polls_choice" ("question_id");
+
+sqlite> select * from polls_choice;
+1|Not much|0|1
+2|The sky|0|1
+3|Just hacking again|0|1
+4|Yes|0|2
+5|No|0|2
+#+end_src
+
+So, we see that each choice has FOUR attributes -- an ID for itself, a text, a count of votes, and the ID of the question to which it is associated.
+
+Note that each choice uses the question ID -- in my example above, I used people's names, but using an ID is more natural. For one thing, it lets people change their names without having to change it in a lot of places, and I don't have to worry about them being spelled slightly wrong. For another, names aren't unique, but IDs are.
+*** Many-to-many relationships
+The example in the tutorial defines a many-to-one relationship -- one choice belongs with one question, but one question has many choices. This kind of relationship, as well as the even simpler one-to-one relationship, is generally implemented by putting the ID of the related object in the table.
+
+There's another kind of relationship between entities called a many-to-many relationship. The relationship between people and hobbies is a good example. Each person has many hobbies, and each hobby can be associated with many people. Traditionally, this is implemented using a "join table" -- a table that just tracks the IDs of both objects. So you might have:
+
+A "people" table:
+
+| ID | Name    | Number of Pets |
+|  1 | Ethan   |              1 |
+|  2 | Rita    |              0 |
+|  3 | Francis |              2 |
+
+A "hobbies" table:
+
+| ID | Hobby        |
+|  1 | Chiptune     |
+|  2 | British rock |
+|  3 | Death metal  |
+
+The "person-to-hobbies link table":
+
+| Person ID | Hobby ID |
+| 1         | 1        |
+| 2         | 2        |
+| 3         | 3        |
+| 3         | 1        |
+
+Django can handle this for you too, but you'll have to read more documentation: https://docs.djangoproject.com/en/1.8/topics/db/examples/many_to_many/.
+*** Homework
+- Let's start small -- instead of a whole dollhouse, let's just design a schema for a paper doll application. A paper doll has a name (e.g. "Princess" or "Zoe") and some articles of clothing. Each article of clothing has a filename (e.g. "gloves.png") and a location (e.g. arms, torso, legs, head). What should the tables look like?
+
+- Go through the tutorial again and try to create another application in your existing site. Call it "paperdolls". Try to define the models the same way they do in the tutorial. To test them, try going into the shell and create objects the way they did (although using your models instead of the polls one). Post any error you get to the mailing list, along with the contents of your models.py.
