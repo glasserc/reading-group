@@ -61,7 +61,7 @@ Once you have your models set up, you can create Python objects and make them go
 
 You can access the database your program created using the "sqlite3" command (which you might have to install using apt-get or yum or something). This part isn't super important because Django mostly insulates you from it, but I thought it might be interesting to see what's going on "underneath the hood", and sometimes this is useful for debugging.
 
-In sqlite, you can do .tables to show the tables. A table was created for "polls_question" and another for "polls_choice". You can see what the "schema" (table structure) for a table was using e.g. ".schema polls_question". You can also see what is in your database using a SELECT statement.
+To open your database in sqlite, you can type "sqlite3 db.sqlite3". In sqlite, you can do .tables to show the tables. A table was created for "polls_question" and another for "polls_choice". You can see what the "schema" (table structure) for a table was using e.g. ".schema polls_question". You can also see what is in your database using a SELECT statement.
 
 #+begin_src
 sqlite> select * from polls_question;
