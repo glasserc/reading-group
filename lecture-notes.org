@@ -293,21 +293,24 @@ def FUNCTION_NAME(PARAM1, PARAM2, ....):
     ...
 #+end_src
 
-N.B. A function definition ALWAYS has a colon (=:=) after the parameter list, and the statements in the function are ALWAYS "indented" by four spaces. Some of those statements might have their own sub-statements, which might be inset by another four spaces, and so on. The function continues until Python sees a non-blank line that isn't indented by four spaces.
+N.B. A function definition ALWAYS has a colon (=:=) after the parameter list, and the statements in the function are ALWAYS "indented" by four spaces. Some of those statements might have their own sub-statements, which might be inset by another four spaces, and so on. The function continues until Python sees a non-blank line that isn't indented by four spaces.[4]
 
 To use the function, you write the name of the function, plus the things you want the function to operate on. Then Python will start doing the various statements, one after the other. If the function is going to return something, you can put a variable in front of it, or use it in another function, or whatever.
 
 As a general rule, using a function looks almost exactly like using an entity or a class, but functions usually have lowercase names and entities and classes have Capitalized names.
 
-You can also define functions inside classes; these are called methods and we'll talk more about them several weeks from now.
+You can also define functions inside classes; these are called methods and we'll talk more about them several weeks from now. In the first part of the tutorial, you defined one called =was_published_recently=.
 
 =__str__()= is a special method that is used whenever an object needs to be displayed. We won't dwell on it right now.
 
 [2] Again, it isn't necessary to specify a type for =password=; like any variable, it can take any value.
 
 [3] =password= is what's called a "local" variable; it will disappear as soon as the function is over.
+
+[4] Some of you have been using TABs instead of spaces. In the Python community, this is discouraged -- it should always be 4 spaces. If you're lucky, you can set up your text editor to insert 4 spaces when you press the TAB key. For instance, on =gedit=, I was able to find a thing on the bottom of the window that says "Tab width: 8 spaces"; clicking on it let me set it to 4 spaces and "use spaces instead of tabs".
 *** import
-In Python, when we want to use models, functions, or variables from another file, we use the =import= command. There are many different ways to import things, none of which we're going to discuss now.
+In Python, when we want to use models, functions, or variables from another file, we use the =import= command. There are many different ways to import things, none of which we're going to discuss now. If you forget to import something, you'll usually get a =NameError= saying that something wasn't defined.
+*** . ("dot")
 *** Homework
 Go through all the files in your site so far. Find examples of the following:
 - functions being used
