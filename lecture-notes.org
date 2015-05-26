@@ -257,7 +257,7 @@ There are a bunch of places where you get to customize how Django does some thin
 
 [1] In some languages, each variable has to be "declared" to hold only some types of values. Python isn't like that; instead it uses "dynamic typing", which means that any variable can hold any value, and even change from one type of value to another. This has advantages and disadvantages.
 *** def foo(): functions/methods
-Any time you see =def foo(...)=, we are defining a function. A function is a part of a program. Like a program, a function has some operands, which are called parameters or arguments, and outputs, which is called the "return value". Here's an example:
+Any time you see =def foo(...)=, we are defining a function. A function is a part of a program. Like a program, a function has some operands, which are called parameters or arguments, and a result, which is called the "return value". Here's an example:
 
 #+begin_src python
 def check_password(password):
