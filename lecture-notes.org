@@ -115,3 +115,220 @@ Django can handle this for you too, but you'll have to read more documentation: 
 - Let's start small -- instead of a whole dollhouse, let's just design a schema for a paper doll application. A paper doll has a name (e.g. "Princess" or "Zoe") and some articles of clothing. Each article of clothing has a filename (e.g. "gloves.png") and a location (e.g. arms, torso, legs, head). What should the tables look like?
 
 - Go through the tutorial again and try to create another application in your existing site. Call it "paperdolls". Try to define the models the same way they do in the tutorial. To test them, try going into the shell and create objects the way they did (although using your models instead of the polls one). Post any error you get to the mailing list, along with the contents of your models.py.
+** Views pt 1
+*** Homework review
+Here are my solutions:
+
+**** Solution 1
+#+begin_src python
+class Doll(models.Model):
+    name = models.CharField(max_length=200)
+
+class ClothingItem(models.Model):
+    doll = models.ForeignKey(Doll)
+
+    filename = models.CharField(max_length=200)
+    # torso = 0, head = 1, arms = 2, legs = 3
+    # FIXME: this is kind of ugly
+    location = models.IntegerField(default=0)
+#+end_src
+
+Dolls table:
+| ID | Name     |
+|  1 | Princess |
+|  2 | Zoe      |
+
+Clothing table:
+| ID | Doll ID | Filename      | Location |
+|  1 |       1 | gloves.png    |        2 |
+|  2 |       1 | red-dress.png |        0 |
+|  3 |       1 | sandals.png   |        3 |
+|  4 |       2 | tiara.png     |        1 |
+|  5 |       2 | lab-coat.png  |        0 |
+
+**** Solution 2
+#+begin_src python
+class ClothingItem(models.Model):
+    filename = models.CharField(max_length=200)
+
+class Doll(models.Model):
+    name = models.CharField(max_length=200)
+    torso_item = models.ForeignKey(ClothingItem)
+    head_item = models.ForeignKey(ClothingItem)
+    arms_item = models.ForeignKey(ClothingItem)
+    legs_item = models.ForeignKey(ClothingItem)
+#+end_src
+
+Dolls table:
+| ID | Name     | Torso | Head | Arms | Legs |
+|  1 | Princess |     2 | ???  |    1 |    3 |
+|  2 | Zoe      |     5 | 4    |  ??? |  ??? |
+
+Clothing table:
+| ID | Filename      |
+|  1 | gloves.png    |
+|  2 | red-dress.png |
+|  3 | sandals.png   |
+|  4 | tiara.png     |
+|  5 | lab-coat.png  |
+
+**** Solution 3
+#+begin_src python
+class Doll(models.Model):
+    name = models.CharField(max_length=200)
+
+class ClothingItem(models.Model):
+    filename = models.CharField(max_length=200)
+
+class DollWearsClothing(models.Model):
+    doll = models.ForeignKey(Doll)
+    clothing_item = models.ForeignKey(ClothingItem)
+    # torso = 0, head = 1, arms = 2, legs = 3
+    # FIXME: this is kind of ugly
+    location = models.IntegerField(default=0)
+#+end_src
+
+Dolls table:
+| ID | Name     |
+|  1 | Princess |
+|  2 | Zoe      |
+
+Clothing table:
+| ID | Filename      |
+|  1 | gloves.png    |
+|  2 | red-dress.png |
+|  3 | sandals.png   |
+|  4 | tiara.png     |
+|  5 | lab-coat.png  |
+
+Doll Wears Clothing table:
+
+| ID | Clothing ID | Doll ID | Location |
+|  1 |           1 |       1 |        2 |
+|  2 |           2 |       1 |        0 |
+|  3 |           3 |       1 |        3 |
+|  4 |           4 |       2 |        1 |
+|  5 |           5 |       2 |        0 |
+|  6 |           3 |       2 |        3 |
+*** Syntax
+Syntax refers to the structure of a language. In English, the sentence "The dog bit the man" is well-formed according to English syntax. The sentence "The bit dog man the" has invalid syntax. The sentence "The man bit the dog" has valid syntax but questionable semantics. In programming languages, we sometimes use "syntax" as an umbrella term for all the rules of the language that give it sense to the computer, which also include semantics.
+
+Depending on how far you've gotten in the Django tutorials, you've seen lots of different syntax so far:
+
+- =from foo import bar= at the beginning of a bunch of different files
+- =class Foo():= for models
+- =blah = models.CharField()= for fields in those models
+- =def __str__():= when defining models
+- =INSTALLED_APPS = (...)= when "activating" models
+- ='words'= and sometimes ="words"=
+- =def foo():= for views
+- =urlpatterns = [...]= when setting up views
+- =url(r'...', foo)= when setting up views
+- =%= in some views
+
+I'm going to touch on the essentials of the most important parts of the most important ones of these, and mention a few details about some of the others, because the goal is to get us up and running as fast as possible without wearing you down with details that aren't important yet. These are just simplistic summaries!
+*** Django settings: variables
+In almost any programming language, you can do stuff like this:
+
+#+NAME: print_variables
+#+begin_src python :results output
+x = 5
+print(x)
+print(x + 3)
+
+x = 6
+print(x)
+print(x + 3)
+#+end_src
+
+If I run this program, it will show:
+
+#+RESULTS: print_variables
+: 5
+: 8
+: 6
+: 9
+
+What's going on is that when Python sees the line =x = 5=, it creates a thing called =x=. Wherever it sees =x=, it checks the last value it got for =x=, which in this case is 5. =x= is called a variable, and you can think of it as like a box in the computer's memory that has some "value" inside of it. When Python then sees the line =x = 6=, it will take the 5 out of the box and put the 6 in.
+
+There are many different kinds of values that we can put into a variable.[1] In the above example, =x= is an integer (in Python, we say =x= is an =int=). You can also have bits of words and sentences in variables: just do =x = 'hello'= or =x = "hello"= (they're equivalent). These bits of text are called "strings" (in Python, we say they are =str=). You can have truth values =True= and =False=, which are called Booleans (in Python, =bool=). You can also have lists, which are written =x = [1, 2, 3]= (in Python these are called =list=\ s, but in other languages they're called arrays or vectors). There's also something called a tuple, which is written =x = (1, 2, 3)=, but for now we're going to say it's the same as a list.
+
+There are a bunch of places where you get to customize how Django does some things. We've already seen that we need to update =INSTALLED_APPS= when we add a new app. =INSTALLED_APPS= is an ordinary variable that Django gives some special meaning to. Most of these variables are written in all uppercase, but some (like =urlpatterns=) aren't, and you just have to know that they're special.
+
+[1] In some languages, each variable has to be "declared" to hold only some types of values. Python isn't like that; instead it uses "dynamic typing", which means that any variable can hold any value, and even change from one type of value to another. This has advantages and disadvantages.
+*** def foo(): functions/methods
+Any time you see =def foo(...)=, we are defining a function. A function is a part of a program. Like a program, a function has some operands, which are called parameters or arguments, and outputs, which is called the "return value". Here's an example:
+
+#+begin_src python
+def check_password(password):
+    if password == 'stairs_are_history!':
+        return True
+    elif password == 'swordfish':
+        return True
+    else:
+        return False
+#+end_src
+
+Here's how you might use it:
+
+#+begin_src python
+user_password = input()
+password_correct = check_password(user_password)
+if password_correct:
+    print("Welcome back!!")
+else:
+    print("Incorrect password")
+#+end_src
+
+So when you see the code =check_password(user_password)=, that's saying "Begin doing the stuff under =def check_password=. Also, when doing those things, the variable =password= is going to have the value that =user_password= does.[2][3]" Then, Python goes through line after line, doing what that line says, until it either gets to the end of the =def= or it hits a =return=. If it hits a =return=, the function immediately ends and the value after the =return= is sent to wherever the =check_password()= line was.
+
+Using a function is a nice way to group some commands together and use them many times in different places. For this reason, Django uses them to represent views.
+
+The syntax for a function is:
+
+#+begin_src python
+def FUNCTION_NAME(PARAM1, PARAM2, ....):
+    STATEMENT1
+    STATEMENT2
+    ...
+#+end_src
+
+N.B. A function definition ALWAYS has a colon (=:=) after the parameter list, and the statements in the function are ALWAYS "indented" by four spaces. Some of those statements might have their own sub-statements, which might be inset by another four spaces, and so on. The function continues until Python sees a non-blank line that isn't indented by four spaces.
+
+To use the function, you write the name of the function, plus the things you want the function to operate on. Then Python will start doing the various statements, one after the other. If the function is going to return something, you can put a variable in front of it, or use it in another function, or whatever.
+
+As a general rule, using a function looks almost exactly like using an entity or a class, but functions usually have lowercase names and entities and classes have Capitalized names.
+
+You can also define functions inside classes; these are called methods and we'll talk more about them several weeks from now.
+
+=__str__()= is a special method that is used whenever an object needs to be displayed. We won't dwell on it right now.
+
+[2] Again, it isn't necessary to specify a type for =password=; like any variable, it can take any value.
+
+[3] =password= is what's called a "local" variable; it will disappear as soon as the function is over.
+*** import
+In Python, when we want to use models, functions, or variables from another file, we use the =import= command. There are many different ways to import things, none of which we're going to discuss now.
+*** Homework
+Go through all the files in your site so far. Find examples of the following:
+- functions being used
+- stuff being imported
+- a list
+- a tuple
+
+Press on and try to get to the end of part 3 of the tutorial. Hopefully by now we are starting to see how Django lets us build a web application.
+** TODO add to email
+Solution 1 is what I expected most of you to come up with. It lets you match clothing with dolls. One nice advantage to this system is that we can have multiple articles of clothing on the same doll in the same place. (So, socks and then sneakers, for example.) Similarly, you can have 0 articles of clothing on a part of the doll. Of course, if your requirements don't need/forbid this, that might be a disadvantage.
+
+Solution 2 is kind of like a straw man, devil's advocate thing. Last week I said this isn't really possible because we don't know what to put in the =???= places. In fact, there is a way -- there's a thing called =NULL= which is like an empty space. Some people say =NULL= [[http://c2.com/cgi/wiki?NullsAndRelationalModel]["violates the relational model"]], which might or might not mean anything, but it certainly can make your life difficult if you expect something to never be =NULL= when in fact it sometimes is. For this reason, all fields in Django are not allowed to be =NULL= (this is also enforced by the database). If you want to change this, you can use the [[https://docs.djangoproject.com/en/1.8/ref/models/fields/#blank][blank]] and [[https://docs.djangoproject.com/en/1.8/ref/models/fields/#django.db.models.Field.null][null]] options in your fields.
+
+Solution 2 doesn't let you have multiple articles in the same place, but it does have one nice advantage which is that it's easy to "share" an article of clothing between two dolls -- you just re-use the ID. In Solution 1, this would require duplicating the filename, which is error-prone. (If you move the filename and forget to update it everywhere, you will have a data consistency problem.)
+
+Solution 3 has the advantages of both solution 1 and solution 2 -- you can share clothing, plus you can have multiple clothing in the same place. But there's something weird in it, which is that the location of the same article of clothing can be different for different dolls.
+
+Any of these solutions might be OK depending on what your requirements are, but I'd probably go with solution 3, but move =location= to the Clothing table, and I'd add a column to the Wear table that specifies order (so that socks always go under sneakers).
+** Future topics
+Local variables
+Methods
+Dynamic typing
+Tuples and how they differ from lists
+The "dot" syntax for looking up fields in models or calling methods
