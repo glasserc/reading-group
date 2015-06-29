@@ -329,6 +329,10 @@ Solution 2 doesn't let you have multiple articles in the same place, but it does
 Solution 3 has the advantages of both solution 1 and solution 2 -- you can share clothing, plus you can have multiple clothing in the same place. But there's something weird in it, which is that the location of the same article of clothing can be different for different dolls.
 
 Any of these solutions might be OK depending on what your requirements are, but I'd probably go with solution 3, but move =location= to the Clothing table, and I'd add a column to the Wear table that specifies order (so that socks always go under sneakers).
+** office hours
+*** exercise 1: change your index view to say "This is the paper dolls index"
+*** exercise 2: make it show your index view when you go to polls/hello
+*** exercise 3: create a new view that says "I finished exercise 3!" when you go to /ex3
 ** Future topics
 Local variables
 Methods
