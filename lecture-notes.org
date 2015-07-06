@@ -1,3 +1,4 @@
+#+HTML_HEAD: <style type="text/css">pre.src { background-color: #333; color: #fff; }</style>
 * Reading group
 ** Modeling
 Ground rule: If you don't understand something, ask as soon as possible -- it's probably my fault for not explaining it well. If there's something that it's OK not to understand, I'll say so, so assume that everything I said, I was trying to make you understand, and if I didn't succeed, I would like to know that.
@@ -329,6 +330,201 @@ Solution 2 doesn't let you have multiple articles in the same place, but it does
 Solution 3 has the advantages of both solution 1 and solution 2 -- you can share clothing, plus you can have multiple clothing in the same place. But there's something weird in it, which is that the location of the same article of clothing can be different for different dolls.
 
 Any of these solutions might be OK depending on what your requirements are, but I'd probably go with solution 3, but move =location= to the Clothing table, and I'd add a column to the Wear table that specifies order (so that socks always go under sneakers).
+** office hours
+*** exercise 1: change your index view to say "This is the paper dolls index"
+*** exercise 2: make it show your index view when you go to polls/hello
+*** exercise 3: create a new view that says "I finished exercise 3!" when you go to /ex3
+** urlpattern exercises feedback
+- /blog was intentional; the goal was to hammer in the point that the name of the files on-disk don't have to correspond to the names in the URLs.
+- In exercise 4, when we want to match any player's name, we can use the dot character ('.') in the pattern to match anything at all.
+- You can use the name of a view directly in the site's urlpatterns -- you don't have to include a file if you don't want to. You can just give the path to the view and Django will import it for you.
+- Yes, in fact, you can make this work -- the Drupal CMS is set up like this. Everything is just a "node" and depending on what kind of node you get out of the database, you then do something different with it. Yes, this is kind of backwards, and nobody sane does it. Drupal is written in PHP, so you can safely consider them insane.
+** Views pt 2
+Outstanding questions: what is this .format() business?
+
+It's a pretty common situation where you want to have a string built from text and variables. Here's the "simple" way to do that in Python:
+
+#+begin_src python
+x = 5
+y = 10
+s = "The sum of " + str(x) + " and " + str(y) + " is " + str(x + y)
+#+end_src
+
+Kinda wordy. So most recent languages offer something called "string interpolation", which is a mechanism whereby the language can help "fill in" the string with other bits of text.
+
+Python actually has two string interpolation mechanisms. The tutorial uses this form:
+
+#+begin_src python
+x = 5
+y = 10
+s = "The sum of %s and %s is %s" % (x, y, x+y)
+#+end_src
+
+In the exercises, I used this form:
+
+#+begin_src python
+x = 5
+y = 10
+s = "The sum of {} and {} is {}".format(x, y, x+y)
+#+end_src
+
+The first format is older, and inspired by older mechanisms like C's ~printf~. The second one is newer and more powerful. For instance, if you forget which one is supposed to be x and which one is supposed to be y, you can do this:
+
+#+begin_src python
+x = 5
+y = 10
+s = "The sum of {x} and {y} is {xplusy}".format(x=x, y=y, xplusy=x+y)
+#+end_src
+
+The full details are available in https://docs.python.org/3.5/library/string.html#format-string-syntax.
+*** Recap to this point:
+We've actually learned a lot of "mini-languages", including regular expressions and format strings. We're actually going to learn another three or four in the near future -- today's is the Django template system.
+*** Templates
+So far we've written views that just produce responses. But an actual web page is an enormous blob of HTML, some of which is shared between pages and some of which is completely different. Dumping all of that into your ~views.py~ file would rapidly become unmaintainable.[1] So most web frameworks offer a notion of "templates", which are another mini-language that make it easier to generate HTML.
+
+Here's a template (let's pretend we saved it as ~polls/some-template.html~:
+
+#+begin_src jinja
+Hello, {{ thing }}!
+#+end_src
+
+In Django, the usual way to use a template is to turn it into an HttpResponse, like this:
+
+#+begin_src python
+def my_view(request):
+    return render(request, "polls/some-template.html", {"thing": "world"})
+#+end_src
+
+The ~render~ function takes three arguments -- the request, the name of the template, and any arguments for the template. These arguments are sometimes called a /context/. The template can access anything in the context. Together, the above should produce:
+
+#+begin_example
+Hello, world!
+#+end_example
+
+Templates help institute a division between code and presentation. Typically front-end engineers work on templates (and CSS and JS), and back-end engineers work on code that provides stuff to those templates. We're going to be working a little bit on all of these.
+
+[1] Maintainability refers to the property of software to be maintained, i.e. understood, debugged, updated and changed to do new things or to do them better. Maintainability is a big deal for software engineers. Usually maintainable code beats fast-to-write code, and fast-to-write code usually beats fast-to-run code, but this depends on what section of software you're in.
+*** Template language
+**** Default is to output
+Most template languages are geared towards producing output. In fact, to produce output, you don't even need to give a command -- you just write text. Anything you write will be copied to the output.
+
+Example:
+
+#+begin_src jinja
+This is some text without anything special going on.
+#+end_src
+
+With:
+
+#+begin_src python
+def my_view(request):
+    return render(request, "polls/some-template.html", {"thing": "world"})
+#+end_src
+
+Produces:
+
+#+begin_example
+This is some text without anything special going on.
+#+end_example
+
+Note that when you're looking at your template, you're looking at plain text, but the template is being rendered as HTML, which is a bit different. In particular, blank lines in text are just spaces in HTML.
+**** You can use variables
+To access things from the context, you can write two curly braces, then the name of the thing in the context, and then two curly braces.
+
+Example:
+
+#+begin_src jinja
+This is some {{ field }} without anything {{ adjective }} going on.
+#+end_src
+
+With:
+
+#+begin_src python
+def my_view(request):
+    return render(request, "polls/some-template.html", {
+        "field": "words", "adjective": "unusual", "name": "Ethan"
+        })
+#+end_src
+
+Produces:
+
+#+begin_example
+This is some words without anything unusual going on.
+#+end_example
+
+As the example shows, you don't have to use everything in the context, but if you use something that *isn't* in the context, it's an error.
+
+You can also access attributes the same way you do in Python. So let's say you have some object in your context, like this:
+
+#+begin_src python
+def my_view(request):
+    q = Question(id=1, question_text="What's up?")
+    return render(request, "polls/some-template.html", {
+        "question": q
+        })
+#+end_src
+
+You can get the text "What's up" using:
+
+#+BEGIN_EXAMPLE
+Please answer the question: {{ q.question_text }}
+#+END_EXAMPLE
+
+Of course, you can access attributes of attributes of attributes, more or less the same way you do in Python:
+
+#+BEGIN_EXAMPLE
+You chose {{ c.choice_text }} for {{ c.question.question_text }}
+#+END_EXAMPLE
+**** Conditionals
+Sometimes you have two different things you might want to do. For example, if polling has closed on a question, then maybe you don't want to let people vote, but if it hasn't closed yet, then you do.
+
+#+BEGIN_SRC jinja
+{% if q.was_published_recently %}
+  OK, you can vote on this question.
+{% else %}
+  Sorry, polling has closed on this question.
+{% endif %}
+#+END_SRC
+
+This is very similar to if statements in Python, which I think we saw a little bit of already, so I won't dwell on it.
+
+N.B. The ~if~ command in Django templates is written using ~{%~ and ~%}~ instead of ~{{~ and ~}}~! Don't confuse the two!
+**** Looping
+So far we haven't talked much about types, but hopefully you remember that ~[1, 2, 3]~ is a list. If you have a list of things, you can do something with each element. So let's say we have:
+
+#+begin_src python
+def my_view(request):
+    return render(request, "polls/some-template.html", {
+        "numbers": [1, 1, 2, 3, 5, 8]
+        })
+#+end_src
+
+And the template:
+
+#+BEGIN_SRC jinja
+Do you notice anything about these numbers?
+
+{% for number in numbers %}
+  {{ number }} ...
+{% endfor %}
+#+END_SRC
+
+This will produce:
+
+#+BEGIN_EXAMPLE
+Do you notice anything about these numbers?
+
+  1 ...
+  1 ...
+  2 ...
+  3 ...
+  5 ...
+  8 ...
+#+END_EXAMPLE
+
+This structure is called a *loop*. We haven't had to use it in Python, but it exists there and is very similar. Lots of things produce lists or other loop-able structures. How it works is, first ~number~ is set to the first thing in ~numbers~. Then, everything between ~{% for .... %}~ and ~{% endfor %}~ is run. Then, we go back to the top. ~number~ gets set to the *next* thing in ~numbers~, and then everything between ~{% for ... %}~ and ~{% endfor %}~ is run again. And so on, until there's nothing left in ~numbers~.
+
+N.B. The ~for~ command, like the ~if~ command and most other commands in Django templates, is written using ~{%~ and ~%}~ instead of ~{{~ and ~}}~.
 ** Future topics
 Local variables
 Methods
