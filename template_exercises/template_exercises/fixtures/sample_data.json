@@ -26,6 +26,14 @@
         },
         "pk": 3
     },
+    {   "model": "blog.BlogPost",
+        "fields": {
+            "post_text": "This is our most recent post.",
+            "author_name": "Ethan",
+            "pub_date": "2015-02-17T09:01:20-0500"
+        },
+        "pk": 4
+    },
     {
         "model": "blog.Comment",
         "fields": {
@@ -42,7 +50,7 @@
             "post": 2,
             "author_name": "Ethan",
             "comment_text": "Thanks Rick!",
-            "pub_date": "2015-02-09T12:12:00-0500"
+            "pub_date": "2015-02-09T12:19:42-0500"
         },
         "pk": 2
     },
@@ -64,7 +72,7 @@
             "comment_text": "Man, this blog sucks.",
             "pub_date": "2015-02-15T15:02:00-0500"
         },
-        "pk": 4
+        "pk": 6
     },
     {
         "model": "blog.Comment",
@@ -84,7 +92,7 @@
             "comment_text": "Yeah, buzz off, loser!",
             "pub_date": "2015-02-15T18:12:00-0500"
         },
-        "pk": 6
+        "pk": 4
     },
     {
         "model": "blog.Comment",
