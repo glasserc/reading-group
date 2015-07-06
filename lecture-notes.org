@@ -378,7 +378,7 @@ s = "The sum of {x} and {y} is {xplusy}".format(x=x, y=y, xplusy=x+y)
 
 The full details are available in https://docs.python.org/3.5/library/string.html#format-string-syntax.
 *** Recap to this point:
-We've actually learned a lot of "mini-languages", including regular expressions and format strings. We're actually going to learn another three or four in the near future -- today's is the Django template system.
+We've actually learned a lot of "mini-languages", including SQL, regular expressions and format strings. We're actually going to learn another three or four in the near future -- today's is the Django template system.
 *** Templates
 So far we've written views that just produce responses. But an actual web page is an enormous blob of HTML, some of which is shared between pages and some of which is completely different. Dumping all of that into your ~views.py~ file would rapidly become unmaintainable.[1] So most web frameworks offer a notion of "templates", which are another mini-language that make it easier to generate HTML.
 
