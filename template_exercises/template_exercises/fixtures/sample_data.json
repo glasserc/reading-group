@@ -1,0 +1,107 @@
+[
+    {
+        "model": "blog.BlogPost",
+        "fields": {
+            "post_text": "This is the first blog post.",
+            "author_name": "Ethan",
+            "pub_date": "2015-02-01T00:00:00-0500"
+        },
+        "pk": 1
+    },
+    {
+        "model": "blog.BlogPost",
+        "fields": {
+            "post_text": "This is another blog post.",
+            "author_name": "Ethan",
+            "pub_date": "2015-02-08T00:00:00-0500"
+        },
+        "pk": 2
+    },
+    {
+        "model": "blog.BlogPost",
+        "fields": {
+            "post_text": "This is a guest post!",
+            "author_name": "Rita",
+            "pub_date": "2015-02-12T00:00:00-0500"
+        },
+        "pk": 3
+    },
+    {   "model": "blog.BlogPost",
+        "fields": {
+            "post_text": "This is our most recent post.",
+            "author_name": "Ethan",
+            "pub_date": "2015-02-17T09:01:20-0500"
+        },
+        "pk": 4
+    },
+    {
+        "model": "blog.Comment",
+        "fields": {
+            "post": 2,
+            "author_name": "Rick",
+            "comment_text": "Wow, this is great!",
+            "pub_date": "2015-02-09T12:12:00-0500"
+        },
+        "pk": 1
+    },
+    {
+        "model": "blog.Comment",
+        "fields": {
+            "post": 2,
+            "author_name": "Ethan",
+            "comment_text": "Thanks Rick!",
+            "pub_date": "2015-02-09T12:19:42-0500"
+        },
+        "pk": 2
+    },
+    {
+        "model": "blog.Comment",
+        "fields": {
+            "post": 3,
+            "author_name": "Ethan",
+            "comment_text": "Great work Rita!",
+            "pub_date": "2015-02-13T12:41:00-0500"
+        },
+        "pk": 3
+    },
+    {
+        "model": "blog.Comment",
+        "fields": {
+            "post": 3,
+            "author_name": "Some Stranger",
+            "comment_text": "Man, this blog sucks.",
+            "pub_date": "2015-02-15T15:02:00-0500"
+        },
+        "pk": 6
+    },
+    {
+        "model": "blog.Comment",
+        "fields": {
+            "post": 3,
+            "author_name": "Rita",
+            "comment_text": "Get off our blog!",
+            "pub_date": "2015-02-15T16:59:00-0500"
+        },
+        "pk": 5
+    },
+    {
+        "model": "blog.Comment",
+        "fields": {
+            "post": 3,
+            "author_name": "Ethan",
+            "comment_text": "Yeah, buzz off, loser!",
+            "pub_date": "2015-02-15T18:12:00-0500"
+        },
+        "pk": 4
+    },
+    {
+        "model": "blog.Comment",
+        "fields": {
+            "post": 1,
+            "author_name": "freepills.com",
+            "comment_text": "Fr33 v14gr4 p1ll5 C4n4d4 ph4rm4",
+            "pub_date": "2015-04-09T18:01:00-0500"
+        },
+        "pk": 7
+    }
+]

@@ -378,7 +378,7 @@ s = "The sum of {x} and {y} is {xplusy}".format(x=x, y=y, xplusy=x+y)
 
 The full details are available in https://docs.python.org/3.5/library/string.html#format-string-syntax.
 *** Recap to this point:
-We've actually learned a lot of "mini-languages", including regular expressions and format strings. We're actually going to learn another three or four in the near future -- today's is the Django template system.
+We've actually learned a lot of "mini-languages", including SQL, regular expressions and format strings. We're actually going to learn another three or four in the near future -- today's is the Django template system.
 *** Templates
 So far we've written views that just produce responses. But an actual web page is an enormous blob of HTML, some of which is shared between pages and some of which is completely different. Dumping all of that into your ~views.py~ file would rapidly become unmaintainable.[1] So most web frameworks offer a notion of "templates", which are another mini-language that make it easier to generate HTML.
 
@@ -486,7 +486,13 @@ Sometimes you have two different things you might want to do. For example, if po
 {% endif %}
 #+END_SRC
 
-This is very similar to if statements in Python, which I think we saw a little bit of already, so I won't dwell on it.
+This is very similar to if statements in Python, which I think we saw a little bit of already, so I won't dwell on it. As in Python, you can write some (limited expressions) as the "condition". For example, here's how you could check if a choice hadn't received any votes yet.
+
+#+BEGIN_SRC jinja
+{% if c.num_votes == 0 %}
+  Nobody has voted for this choice yet!
+{% endif %}
+#+END_SRC
 
 N.B. The ~if~ command in Django templates is written using ~{%~ and ~%}~ instead of ~{{~ and ~}}~! Don't confuse the two!
 **** Looping
@@ -525,6 +531,79 @@ Do you notice anything about these numbers?
 This structure is called a *loop*. We haven't had to use it in Python, but it exists there and is very similar. Lots of things produce lists or other loop-able structures. How it works is, first ~number~ is set to the first thing in ~numbers~. Then, everything between ~{% for .... %}~ and ~{% endfor %}~ is run. Then, we go back to the top. ~number~ gets set to the *next* thing in ~numbers~, and then everything between ~{% for ... %}~ and ~{% endfor %}~ is run again. And so on, until there's nothing left in ~numbers~.
 
 N.B. The ~for~ command, like the ~if~ command and most other commands in Django templates, is written using ~{%~ and ~%}~ instead of ~{{~ and ~}}~.
+**** Filters
+Certain other operations are allowed using a concept known as a "filter". For example, you can get the length of a list using:
+
+#+BEGIN_SRC jinja
+There are {{ numbers|length }} numbers.
+#+END_SRC
+
+You can select the first element of a list using:
+
+#+BEGIN_SRC jinja
+The first number is {{ numbers|first }}.
+#+END_SRC
+
+If you have a string you can convert it to lowercase using:
+
+#+BEGIN_SRC jinja
+When I am feeling blue, I sign my name as {{ name|lower }}.
+#+END_SRC
+
+There's even a "pluralize" filter that helps apply the rules for English pluralization (use a singular if n = 1, otherwise use plural). This isn't safe for international websites, but it's a useful shortcut otherwise.
+#+BEGIN_SRC jinja
+Here are your item{{ num_items|pluralize }}:
+#+END_SRC
+
+You can chain filters too, so if you want the first letter of a string, converted to lower-case, you can do:
+
+#+BEGIN_SRC jinja
+Not everyone's name can begin with {{ name|lower|first }}.
+#+END_SRC
+**** Summary
+Django templates are actually tightly limited in scope. The designers of Django wanted to prevent people writing templates from having the ability to break a site by writing a bad template. However, the operations available in a template are specialized for generating text, so despite the limitations, they are still more useful than writing HTML in Python files.
+
+A complete summary of the "built-in" functionality in the template system is available at https://docs.djangoproject.com/en/1.8/ref/templates/builtins/.
+*** Database access
+We've already agreed that a web application stores its data in a database, and so Django has to provide some mechanism that our websites can use to get data into and out of our database. We saw some of this in part 1 of the Django tutorial, but now is when we can really apply it. We need objects to give to our templates, and these objects are often going to come from the database, so let's review how we can do that.
+**** Retrieving an object
+Access to objects in the "database", rather than just a single object, or the model itself, is done through an ~objects~ field. If you have a model called ~Question~ and want to retrieve the one with ID 5, you can do:
+
+#+BEGIN_SRC python
+q = Question.objects.get(pk=5)
+#+END_SRC
+**** All objects
+You can get access to all objects using the ~all()~ method:
+
+#+BEGIN_SRC python
+qs = Question.objects.all()
+#+END_SRC
+**** Filters and field lookups
+What if you want only some of them? For example, you might want to get all the ~Questions~ that have a ~pub_date~ that is already passed, or you might want to get all the ~Choices~ with no votes. In this case, you add a filter using the ~filter~ method. Some examples:
+
+#+BEGIN_SRC python
+now = timezone.now()
+qs = Question.objects.filter(pub_date__lte=now)
+choices = Choice.objects.filter(votes__exact=0)
+#+END_SRC
+
+The parameters to ~filter~ are known as "field lookups". You can add as many as you like in a call to ~filter~. Each one expresses some criteria of the objects you are looking for.  These "lookups" are composed of (1) the field name that you are concerned with, (2) a double underscore (~__~), (3) some comparison you want to make with that field, (4) an equals sign (~=~), and (5) something to compare against. So, in the above, we see ~pub_date__lte=now~; ~pub_date~ is the field, and we are looking for the cases where that is ~lte~ (less than or equal to) whatever we have as ~now~. Similarly, ~votes__exact=0~ means to find all choices where the ~votes~ field is ~exact~ (exactly equal to) the value ~0~.
+
+All fields are the ones we defined as fields in the model. However, if the field you want to use is a foreign key, you have to add a ~_id~ to the field name. So if we want to get all the choices for ~Question~ with ID 5, we write:
+
+#+BEGIN_SRC python
+choices = Choice.objects.filter(question_id=5)
+#+END_SRC
+
+There's one short-cut with field lookups -- if you don't specify a comparison, it's assumed to be ~exact~. So we can instead write:
+
+#+BEGIN_SRC python
+choices = Choice.objects.filter(votes=0)
+#+END_SRC
+
+(In fact, this is how the ~pk=5~ example above works too.)
+**** Full documentation
+A complete reference is available at https://docs.djangoproject.com/en/1.8/topics/db/queries/. Field lookups are also documented more extensively at https://docs.djangoproject.com/en/1.8/ref/models/querysets/#field-lookups.
 ** Future topics
 Local variables
 Methods
