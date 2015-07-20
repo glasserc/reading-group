@@ -1,0 +1,24 @@
+<html>
+  <body>
+    <p>
+      On {{ post.pub_date }} by {{ post.author_name }}
+    </p>
+    <p>
+      {{ post.post_text }}
+    </p>
+    {% for comment in comments %}
+      <p>
+        Comment posted on {{ comment.pub_date }} by
+        {# Ugh, FIXME, couldn't find a better way to get the whitespace right #}
+        {% if comment.author_name == post.author_name %}
+          {{ comment.author_name }} (original_author):
+        {% else %}
+          {{ comment.author_name }}:
+        {% endif %}
+      </p>
+      <p>
+        {{ comment.comment_text }}
+      </p>
+    {% endfor %}
+  </body>
+</html>

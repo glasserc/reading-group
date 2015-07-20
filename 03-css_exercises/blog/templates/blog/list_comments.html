@@ -1,0 +1,15 @@
+<html>
+  <body>
+    {% for comment in comments %}
+      <p>
+        Comment posted on {{ comment.pub_date }} by
+        {{ comment.author_name }}:
+      </p>
+      <p>
+        <a href="{% url 'show_post' comment.post_id %}">
+          {{ comment.comment_text }}
+        </a>
+      </p>
+    {% endfor %}
+  </body>
+</html>
