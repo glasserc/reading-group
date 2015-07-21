@@ -337,8 +337,8 @@ Any of these solutions might be OK depending on what your requirements are, but 
 ** urlpattern exercises feedback
 - /blog was intentional; the goal was to hammer in the point that the name of the files on-disk don't have to correspond to the names in the URLs.
 - In exercise 4, when we want to match any player's name, we can use the dot character ('.') in the pattern to match anything at all.
-- You can use the name of a view directly in the site's urlpatterns -- you don't have to include a file if you don't want to. You can just give the path to the view and Django will import it for you.
-- Yes, in fact, you can make this work -- the Drupal CMS is set up like this. Everything is just a "node" and depending on what kind of node you get out of the database, you then do something different with it. Yes, this is kind of backwards, and nobody sane does it. Drupal is written in PHP, so you can safely consider them insane.
+- You can use the name of a view directly in the site's urlpatterns -- you don't have to include a file if you don't want to. You can just give the path to the view and Django will import it for you. So for example you can write 'polls.views.index'. The last part of the path represents the name of the view; everything else represents the name of the module where to find the view.
+- For the last exercise: yes, in fact, you can make this work -- the Drupal CMS is set up like this. Everything is just a "node" and depending on what kind of node you get out of the database, you then do something different with it. Yes, this is kind of backwards, and nobody sane does it. Drupal is written in PHP, so you can safely consider them insane.
 ** Views pt 2
 Outstanding questions: what is this .format() business?
 
@@ -452,7 +452,7 @@ Produces:
 This is some words without anything unusual going on.
 #+end_example
 
-As the example shows, you don't have to use everything in the context, but if you use something that *isn't* in the context, it's an error.
+As the example shows, you don't have to use everything in the context. It turns out that in Django's template language, you can try to use variables that *aren't* in the context and they will just silently fail and print nothing. I would encourage you not to rely on this behavior if you can avoid it.
 
 You can also access attributes the same way you do in Python. So let's say you have some object in your context, like this:
 
