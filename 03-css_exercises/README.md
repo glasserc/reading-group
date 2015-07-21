@@ -73,10 +73,7 @@ Try to get the lines and borders right.
   it. All horizontal lines on the page are implemented using
   ``border`` properties.
 
-- You might need to add, subtract, or change HTML elements. In
-  particular, you might need the <div> element, which
-  [has no meaning](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/div)
-  but can be used to group and style elements.
+- You might need to add, subtract, or change HTML elements.
 
 [^1]: Obviously my design skills are crap so I just took screenshots
     of what I hope the answer will look like.
