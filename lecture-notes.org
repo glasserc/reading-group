@@ -404,6 +404,17 @@ Hello, world!
 Templates help institute a division between code and presentation. Typically front-end engineers work on templates (and CSS and JS), and back-end engineers work on code that provides stuff to those templates. We're going to be working a little bit on all of these.
 
 [1] Maintainability refers to the property of software to be maintained, i.e. understood, debugged, updated and changed to do new things or to do them better. Maintainability is a big deal for software engineers. Usually maintainable code beats fast-to-write code, and fast-to-write code usually beats fast-to-run code, but this depends on what section of software you're in.
+*** Contexts
+A context is just a collection of variables for a template. Like all variables, these variables have a *name* and a *value*. In the example above, we created one variable called "username", whose value was "Ethan". Contexts are usually defined using syntax like:
+
+#+BEGIN_EXAMPLE python
+now = timezone.now()
+ctx = {"username": "Ethan", "now": now}
+#+END_EXAMPLE
+
+This syntax means a "dictionary", which is made up of *keys* (before the colons) and *values* (after the colons).  You can look up the value for a particular key, or look at all values, or all keys.  If you access ~ctx["username"]~, that will produce "Ethan".
+
+A context is a dictionary where all the keys are strings.
 *** Template language
 **** Default is to output
 Most template languages are geared towards producing output. In fact, to produce output, you don't even need to give a command -- you just write text. Anything you write will be copied to the output.
