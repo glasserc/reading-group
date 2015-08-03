@@ -1,0 +1,18 @@
+{% load static %}
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="{% static 'blog/style.css' %}" />
+  </head>
+  <body>
+    <h1 id="logo">The Gutterfrump Times</h1>
+    <h2 id="masthead">Today's news, today</h2>
+    {% for post in posts %}
+      <p>
+        On <a href="{% url 'show_post' post.id %}">{{ post.pub_date }}</a> by {{ post.author_name }}:
+      </p>
+      <p class="blog-post-text">
+        {{ post.post_text }} ({{ post.comment_set.all|length }} comments)
+      </p>
+    {% endfor %}
+  </body>
+</html>

@@ -1,0 +1,23 @@
+{% load static %}
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="{% static 'blog/style.css' %}" />
+  </head>
+  <body>
+    <h1 id="logo">The Gutterfrump Times</h1>
+    <h2 id="masthead">Today's news, today</h2>
+    <h3 id="page-title">What's happening on our blog</h3>
+    {% for comment in comments %}
+      <p class="comments-divider"></p>
+      <p>
+        Comment posted on {{ comment.pub_date }} by
+        {{ comment.author_name }}:
+      </p>
+      <p>
+        <a href="{% url 'show_post' comment.post_id %}">
+          {{ comment.comment_text }}
+        </a>
+      </p>
+    {% endfor %}
+  </body>
+</html>

@@ -1,0 +1,32 @@
+{% load static %}
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="{% static 'blog/style.css' %}" />
+  </head>
+  <body>
+    <h1 id="logo">The Gutterfrump Times</h1>
+    <h2 id="masthead">Today's news, today</h2>
+    <p>
+      On {{ post.pub_date }} by {{ post.author_name }}
+    </p>
+    <p class="blog-post-text">
+      {{ post.post_text }}
+    </p>
+    <p class="comments-divider">
+    </p>
+    {% for comment in comments %}
+      <p>
+        Comment posted on {{ comment.pub_date }} by
+        {# Ugh, FIXME, couldn't find a better way to get the whitespace right #}
+        {% if comment.author_name == post.author_name %}
+          {{ comment.author_name }} (original author):
+        {% else %}
+          {{ comment.author_name }}:
+        {% endif %}
+      </p>
+      <p>
+        {{ comment.comment_text }}
+      </p>
+    {% endfor %}
+  </body>
+</html>
