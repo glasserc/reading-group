@@ -726,6 +726,20 @@ HTML elements can have "classes" and "ids" that serve no purpose other than to "
 To debug CSS rules, you can use your browser's development tools. For example, you can right click on an element and select "Inspect element" to look at what the browser believes the HTML is and what rules apply to it.
 
 Generally, we try to maintain a consistent "look and feel" throughout our site, which includes consistent templates and style; we'll touch more on that in future weeks.
+** CSS part 2
+*** Template inheritance
+*** A warning
+I'm not really specialized in front-end stuff, although I can get by in a pinch. I'm not 100% up to date on the hot trends or the cool new things, and I'm not exactly sure what to point you at. Here's the lay of the land re: CSS.
+
+- The Bad Old Days: Front-end web development was about knowing stupid CSS tricks that you could use to make a design work in IE as well as other browsers. Layout was done using ~<table>~\ s. Styling was done directly as HTML attributes (~<font>~ tags, ~<table bgcolor="#fff">~, etc.). IE <6. About these techniques and this worldview I know almost nothing. I know at least one web developer who "got out" before this period ended.
+
+- Middle Ages.
+
+- The Renaissance.
+
+- The future.
+*** Block and Inline
+
 ** Future topics
 Local variables
 Methods
