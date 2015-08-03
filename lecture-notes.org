@@ -615,6 +615,142 @@ choices = Choice.objects.filter(votes=0)
 (In fact, this is how the ~pk=5~ example above works too.)
 **** Full documentation
 A complete reference is available at https://docs.djangoproject.com/en/1.8/topics/db/queries/. Field lookups are also documented more extensively at https://docs.djangoproject.com/en/1.8/ref/models/querysets/#field-lookups.
+** Comments on the exercises
+*** Types of model object
+We've seen three different kinds of object:
+
+- Model class. These are usually written in capitals (a.k.a. CamelCase) like ~BlogPost~. Model classes define fields, but don't themselves have those fields, so you can't do ~BlogPost.post_text~.
+- An *instance* or object of this model class, like ~BlogPost.objects.get(pk=5)~. These are usually put in variables with lower-case-with-underscores names (a.k.a. snake_case, named for Python). If you have ~blog_post = BlogPost.objects.get(pk=5)~, then you can access its fields using ~blog_post.post_text~.
+- There's also a "manager", which is the thing you see at  ~BlogPost.objects~. You go from the model class to the manager, and the manager provides access to the objects.
+- There's also another type, which is "list of objects":
+~BlogPost.objects.all()~ or ~BlogPost.objects.filter(...)~. If you have a list of blog post objects, each one of them will have those fields, but the list itself won't.
+
+Model classes are like cookie cutters, and instances are like the cookies they've cut out. The model class defines the shape of the objects, and how they get made, but isn't itself one of them.
+*** RequestContext
+For the purposes of this exercise, we don't really need a ~RequestContext~ -- we could use the simpler ~Context~, which doesn't need access to the request -- but we may as well use the ~RequestContext~ everywhere. It's only actually used in a few cases -- the ~LocaleMiddleware~ tries to guess what language the user speaks, which is used when you use ~{% trans %}~ in a template, and there's a thing called *CSRF* which requires sending something to the user when you render templates.
+*** for loops
+A for loop repeats some set of operations for each object in a list. So, you have to have a list.
+
+#+BEGIN_SRC jinja
+{% for blog_post in my_list_of_blog_posts %}
+  {{ blog_post.post_text }}
+{% endfor %}
+#+END_SRC
+
+This means to take the first object in my_list_of_blog_posts, and then do everything "inside" the for loop, with ~blog_post~ being that object. Then, go back to the top and repeat, with ~blog_post~ being the *second* object, and so on.
+*** What goes in a view vs. a template?
+Django structures stuff according to a paradigm called "model-view-template" (MVT). (Other frameworks work similarly but with different names for the different layers.) This division allocates responsibilities as follows:
+
+- Models: the one "source of truth" for how your data should look and behave.
+- Views: responsible for actually responding to user requests and translating that into access to models
+- Templates: responsible for presenting the output of the views to a user -- this is the "user experience" part.
+
+What goes in which area is a little bit inexact, and reasonable people can disagree, but most people agree with this vague division.
+
+In these particular exercises, the question of where to put the logic that fetches a blog post's comments could be argued either way. You could put it in the template if you think it's a user interface concern how, if, and whether we display comment information. You could put it in the view if you believe that the main concern here is deciding what data to fetch and how to fetch it. In particular, there are some optimizations you can make if you do the fetching all at once in the view rather than post-by-post in the template. It's also a little surprising if you "accidentally" do database queries in the template, because that might eventually impact performance.
+
+FIXME: The above isn't 100% since fetching in the view is probably correct but it's an optimization that doesn't change how the template looks.
+
+About templates in particular, a good rule of thumb is that you've done a good job dividing stuff between your view and your template if you only have to change your template when someone comes to you and says "Actually, the way we're presenting this information isn't what we want. Can we present it this other way?" (But don't get dogmatic! It's always better to be inconsistent than to have unmaintainable code.)
+*** Limits of Django templates
+Because of the above division, Django templates are written to be *very* limited. You can't even call functions in a template! There's one exception to this: if you have a "method" like ~obj.foo()~, you can write that in a Django template like ~{{ obj.foo }}~, without the parentheses. Yes, this is crazy, but you might need this to access all the comments for a blog post.
+*** Length of a list
+In regular Python, you would write ~len(my_list)~. In Django templates, you have to write ~{{ my_list|length }}~.
+
+Different languages and environments have different names for this operation -- ~size~, ~count~, ~length~ are all common. Python's a little unique in that it writes ~len(my_list)~ instead of ~my_list.len~. (This is for historical reasons.)
+*** Formatting/style
+Software engineers *love* to argue about formatting of source code, often to the detriment of actual engineering. I try to stay limber about these sorts of things and I'd encourage you to as well, at least until you originate a project from scratch and can bend people to your will.
+
+Some "meta-guidelines":
+
+- When in Rome, do as the Romans do. Your code should look like code in the same file, or the same project, or code that works with the same framework.
+- Languages often define standards for how code should look. In Python, the standard to follow is PEP8. I don't know of a standard for Django templates.
+- Break the rules if it makes something easier to read.
+
+Some generic guidelines:
+
+- When lines get too long, break them into several. "Too long" varies by taste; I prefer about 120 characters, but a lot of people still prefer 80 characters.
+- When you find yourself repeating something, turn it into a variable or a function.
+- Naming things is really hard, but really important.
+- Similar things should go together. Different things should go apart. (This might mean separate functions, separate parts of a file, separate files, or separate projects.)
+** CSS pt 1
+Reading for this week:
+https://www.girldevelopit.com/materials/html-intro, specifically class 2
+
+https://developer.mozilla.org/en-US/docs/Web/Guide/CSS/Getting_Started/Color (don't feel obligated to read the rest of the tutorial, or earlier parts)
+
+https://docs.djangoproject.com/en/1.8/intro/tutorial06/, use as a reference to try to get your CSS into a page
+
+http://media.mediatemple.netdna-cdn.com/wp-content/uploads/images/css3-cheat-sheet/css3-cheat-sheet.pdf list of a whole bunch of different CSS properties; see also https://developer.mozilla.org/en-US/docs/Web/CSS/Reference which is linked to good references for them
+*** Overview
+CSS is yet another language that we use to apply style to our pages.
+
+In CSS, you write *rules* which apply to your HTML elements. Each rule changes some properties of the elements in question.
+
+#+BEGIN_SRC html
+  <html>
+    <body>
+      <p>This is the first paragraph</p>
+      <ul>
+        <li>This is item 1</li>
+        <li class="special-list-item">This is item 2</li>
+        <li class="special-list-item warning">This is <em>item</em> 3</li>
+      </ul>
+      <p class="final-paragraph">This is another paragraph</p>
+    </body>
+  </html>
+#+END_SRC
+
+#+BEGIN_SRC css
+  p {
+    color: #f00;
+  }
+
+  .final-paragraph {
+    color: #ff0;
+    background-color: #000;
+  }
+
+  li {
+    text-decoration: underline;
+  }
+
+  .special-list-item {
+    text-transform: uppercase;
+  }
+
+  .warning {
+    background-color: #f00;
+  }
+
+  em {
+    font-style: italic;
+  }
+#+END_SRC
+
+This will cause the first paragraph to have red text, and the last to have yellow text with a black background; list items will be underlined, and the second and third will be written in uppercase, and the third will have a red background; the last word "item" will be italicized.
+
+CSS rules apply to multiple elements, and each element can be affected by multiple rules. When this happens, there is a "cascade", which merges properties according to certain rules (which we'll get to later; for now, let's just say later rules override earlier rules).
+
+HTML elements can have "classes" and "ids" that serve no purpose other than to "hook up" to CSS rules. Accordingly, you can use whatever classes and IDs you like. Stylistically, classes and IDs are often separated with hyphens (which isn't even possible in Python).
+
+To debug CSS rules, you can use your browser's development tools. For example, you can right click on an element and select "Inspect element" to look at what the browser believes the HTML is and what rules apply to it.
+
+Generally, we try to maintain a consistent "look and feel" throughout our site, which includes consistent templates and style; we'll touch more on that in future weeks.
+** CSS part 2
+*** Template inheritance
+*** A warning
+I'm not really specialized in front-end stuff, although I can get by in a pinch. I'm not 100% up to date on the hot trends or the cool new things, and I'm not exactly sure what to point you at. Here's the lay of the land re: CSS.
+
+- The Bad Old Days: Front-end web development was about knowing stupid CSS tricks that you could use to make a design work in IE as well as other browsers. Layout was done using ~<table>~\ s. Styling was done directly as HTML attributes (~<font>~ tags, ~<table bgcolor="#fff">~, etc.). IE <6. About these techniques and this worldview I know almost nothing. I know at least one web developer who "got out" before this period ended.
+
+- Middle Ages.
+
+- The Renaissance.
+
+- The future.
+*** Block and Inline
+
 ** Future topics
 Local variables
 Methods

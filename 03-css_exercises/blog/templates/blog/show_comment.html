@@ -1,0 +1,22 @@
+<html>
+  <body>
+    <p>
+      On {{ post.pub_date }} by {{ post.author_name }}
+    </p>
+    <p>
+      {{ post.post_text }}
+    </p>
+    <p>
+      Comment posted on {{ comment.pub_date }} by
+      {{ comment.author_name }}:
+    </p>
+    <p>
+      {{ comment.comment_text }}
+    </p>
+    <p>
+      <a href="{% url 'show_post' comment.post_id %}">
+        See the whole conversation
+      </a>
+    </p>
+  </body>
+</html>

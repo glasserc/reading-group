@@ -1,0 +1,11 @@
+<html>
+  <body>
+    <ol>
+      {% for post in posts %}
+        <li>
+          On <a href="{% url 'show_post' post.id %}">{{ post.pub_date }}</a> by {{ post.author_name }}: {{ post.post_text }} ({{ post.comment_set.all|length }} comments)
+        </li>
+      {% endfor %}
+    </ol>
+  </body>
+</html>
