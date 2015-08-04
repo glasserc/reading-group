@@ -2,7 +2,7 @@
     {
         "model": "blog.BlogPost",
         "fields": {
-            "post_text": "This is the first blog post.",
+            "post_text": "This is a very very long blog post. This is a very very long blog post. This is a very very long blog post. This is a very very long blog post. This is a very very long blog post. This is a very very long blog post. This is a very very long blog post.",
             "author_name": "Ethan",
             "pub_date": "2015-02-01T00:00:00-0500"
         },
@@ -20,7 +20,7 @@
     {
         "model": "blog.BlogPost",
         "fields": {
-            "post_text": "This is a guest post!",
+            "post_text": "This is a guest post! It is very long. This is a guest post! It is very long. This is a guest post! It is very long. This is a guest post! It is very long. This is a guest post! It is very long. This is a guest post! It is very long. This is a guest post! It is very long.",
             "author_name": "Rita",
             "pub_date": "2015-02-12T00:00:00-0500"
         },
