@@ -815,6 +815,9 @@ CSS offers both "absolute" (like px) and "relative" (like %, em) measurements. R
 - Dollhouse (i.e., what background? what elements?) actually fetched from the database
 - Dollhouse actually rendered visually -- some background, some elements placed correctly
 ** Forms and HTTP
+I'm not going to cover much about the HTML necessary to write forms, or how to use the Django forms library -- I figure you can probably learn that on your own. But of course, sing out if you have problems.
+
+The thrust of this lesson is about HTTP requests, which are the underlying mechanism for basically everything we've done so far and are especially important in handling forms. This is because the Django forms library is sort of old-fashioned -- modern web applications don't usually submit and refresh the entire page any more, but they still use HTML forms and HTTP requests.
 *** Reading
 Read one of these two. I think the first one is "better" (it's certainly shorter) but it may be less accessible.
 http://www.jmarshall.com/easy/http/
@@ -849,6 +852,8 @@ The difference between ~GET~ and ~POST~ is that when you use ~GET~ in your appli
 A request that updates a blog post would not be considered "safe", and should use POST. A request that searches for a blog post probably is "safe" and thus can use GET.
 
 HTTP requests contain a lot of information, and a web browser makes lots of them in normal usage.
+*** Demo
+Make a GET request with a form as well as a POST request. Log both in Wireshark. Show what they look like.
 ** Future topics
 Local variables
 Methods
