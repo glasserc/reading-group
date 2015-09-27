@@ -739,21 +739,120 @@ To debug CSS rules, you can use your browser's development tools. For example, y
 Generally, we try to maintain a consistent "look and feel" throughout our site, which includes consistent templates and style; we'll touch more on that in future weeks.
 ** CSS part 2
 *** Template inheritance
+The exercises encouraged you to add some things to every page. Of course, that's bad practice (because it's tedious to add and to change; Don't Repeat Yourself). Django templates include a powerful feature called "template inheritance" that lets us get rid of this. The basic idea is that you set up a "framework" template, and the templates for individual views "inherit" the framework from that template.
+
+The Django docs are pretty good for this, so here's the link: https://docs.djangoproject.com/en/1.8/ref/templates/language/#template-inheritance
 *** A warning
 I'm not really specialized in front-end stuff, although I can get by in a pinch. I'm not 100% up to date on the hot trends or the cool new things, and I'm not exactly sure what to point you at. Here's the lay of the land re: CSS.
 
-- The Bad Old Days: Front-end web development was about knowing stupid CSS tricks that you could use to make a design work in IE as well as other browsers. Layout was done using ~<table>~\ s. Styling was done directly as HTML attributes (~<font>~ tags, ~<table bgcolor="#fff">~, etc.). IE <6. About these techniques and this worldview I know almost nothing. I know at least one web developer who "got out" before this period ended.
+- The Bad Old Days: Layout was done using ~<table>~ s. Styling was done directly as HTML attributes (~<font>~ tags, ~<table bgcolor="#fff">~, etc.). Exceeding these constraints meant going to Flash. IE <5. About these techniques and this worldview I know almost nothing. I know at least one web developer who "got out" before this period ended.
 
-- Middle Ages.
+- Antiquity. Introduction of CSS: separation of content from style. Front-end web development means knowing stupid CSS tricks that you could use to make a design work in IE as well as other browsers. See http://www.quirksmode.org/css/csshacks.html. IE 5-6.
 
-- The Renaissance.
+- Middle Ages. CSS coming into its own. CSS gradients, rounded corners. IE 7-8.
 
-- The future.
+- The Renaissance. Chrome, Firefox, and Webkit rule the skies, and seize on this position to introduce of a stream of new technologies to enhance the web experience: HTML5. LocalStorage, Canvas, WebGL, Geolocation. IE 9-10, starting to become a real browser.
+
+- The future. Responsive design/mobile browsers. The death of Flash. Flexbox?
 *** Block and Inline
+Already we've seen two different kinds of elements: ~<p>~ elements, which cause a "break" in the flow of text, and e.g. ~<i>~ which just wraps around some element of text. These two kinds of elements are referred to in the specifications as "block" and "inline" elements. Block elements tend to break text, and inline elements don't. Inline elements can be broken across several lines if they're too long. Text itself is generally inline, although it may be included in a block element. One common surprise is that the ~<img>~ element is also inline by default.
 
+Among other behaviors, inline elements cannot have dimensions set for them using the ~width~ or ~height~ property -- they take their size from the size of their enclosed content. Block elements can; their default ~width~ and ~height~ are ~auto~, which means they take up as much width as they can, and only as much height as they need for their contents.
+
+All of this behavior is controlled by the CSS property ~display:~. Changing an element's ~display~ will have numerous effects, some of which you may not anticipate. The most common values are:
+
+- ~display: none;~ -- completely hides the element
+- ~display: inline;~ -- covered above
+- ~display: block;~ -- covered above
+- ~display: list-item;~
+- ~display: inline-block;~ -- like ~display: inline;~, but supporting ~block~ properties like ~width~ and ~height~, and can't be split across several lines
+*** <div> and <span>
+There are two HTML elements that are extremely important because they don't do anything. Those elements are called ~<div>~ and ~<span>~. Unlike almost every other HTML element, they have no built-in styling or any semantic meaning whatsoever. In order to style them, you use classes and IDs like we saw last session. The only semantics associated with them is that ~<div>~ is, by default, ~display: block;~, and ~<span>~ is, by default, ~display: inline;~.
+*** Floats
+So far we've just been dropping blobs of stuff in a vertical line down the page. If we want to do fancy stuff like lay things out side by side, we need more techniques. The first one was designed for a specialized use case -- where you have some image that you want to "inset" into some text -- but then that turned out to be the best way to get stuff done in the real world. See https://developer.mozilla.org/en-US/docs/Web/CSS/float.
+
+"Floating" an element has a few interesting consequences:
+
+- it is "removed from normal flow", so wherever it was, now it's like it wasn't there
+- it gets placed relative to its "containing box", which is a containing element that is either floating or positioned (see https://developer.mozilla.org/en-US/docs/Web/Guide/CSS/Block_formatting_context)
+- if the element is ~width: auto;~ it will "shrink" to just big enough to contain its content
+- other floating elements will get pushed up against it... even if they are in a totally different part of the HTML (because they're removed from normal flow).
+
+The "antidote" to floating is to specify the ~clear: both;~ property. Putting this on an element means it will be pushed down until it can fit without leaving room for the floated element.
+*** Positioning
+Floating is super useful because you can stack up elements in order without specifying their positions in any way. However, there are a couple of cases where it is useful to specify them more exactly. For that, you can use the ~position~ property. When you use ~position:~, you also have to use ~top~, ~left~, ~bottom~, and ~right~ to specify position exactly.
+
+https://developer.mozilla.org/en-US/docs/Web/CSS/position
+*** CSS/HTML Style
+**** Semantics vs. presentation
+One important idea in modern web design is that HTML elements should dictate what your content is, and how it relates to other content in your file, and not cover styling at all. For example, you shouldn't use ~<p>~ elements to insert spacing -- you should use them to signal that some bit of text is a paragraph (instead of a headline or an element in some list).
+
+Similarly, ~<i>~, ~<b>~, and ~<u>~ (which you might have learned as the elements for italic, bold, and underlined, respectively) don't have semantic meaning of their own, so they're considered deprecated. Instead consider ~<em>~ (emphasized) and ~<strong>~.
+
+This is really the only reason to use any particular HTML element. After all, with CSS, you can make anything look like anything.
+**** Measurements
+For a while some people were saying you should use percentages and ~em~ instead of ~px~ to measure stuff, but I forget why, so maybe do that?
+**** Different window sizes
+Be sure your website looks OK if you resize your browser window. Not everyone uses their browser full-screen.
+**** Accessibility
+Some users of your web page aren't going to be looking at it -- they'll be hearing it through screen readers and tabbing through it with keyboards. To the extent possible, we should support those users too.
+
+http://www.w3.org/WAI/intro/accessibility.php
+
+http://www.w3.org/WAI/intro/wcag.php
+
+Most people and companies don't take this as seriously as they should.
+*** More resources
+http://caniuse.com/ -- see e.g. http://caniuse.com/#feat=webgl
+
+http://www.w3fools.com/ and associated links
+** CSS part 3: random notes
+*** Measurements
+CSS offers both "absolute" (like px) and "relative" (like %, em) measurements. Relative measurements are computed relative to their parents or containers.
+*** Grids
+*** Homework
+- One view which renders a dollhouse
+- Dollhouse (i.e., what background? what elements?) actually fetched from the database
+- Dollhouse actually rendered visually -- some background, some elements placed correctly
+** Forms and HTTP
+*** Reading
+Read one of these two. I think the first one is "better" (it's certainly shorter) but it may be less accessible.
+http://www.jmarshall.com/easy/http/
+http://www.ntu.edu.sg/home/ehchua/programming/webprogramming/HTTP_Basics.html
+
+This provides some amount of overview of how forms work in HTML and HTTP, but with an emphasis on using them in Django. There's one point about forms in Django that you will need to know in order to get them working, and that's the csrf_token thing that they do in the example.
+
+https://docs.djangoproject.com/en/1.8/topics/forms/
+
+Wikipedia's got some sort of light but dense information about forms themselves:
+
+https://en.wikipedia.org/wiki/Form_%28HTML%29
+
+Also, about HTTP request methods:
+
+https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Request_methods
+*** HTTP
+A web application is a program that responds to "requests" from web browsers -- these requests are made using a protocol called HTTP. In HTTP, each request has a "method" (sometimes called a verb).
+
+In Django, you can access information about the request by using the "request" variable that your view takes. For example, you can get the method being used by examining ~request.method~. The URL of the request is also available, but it's broken up and parsed. In a URL like http://localhost:8080/blog/index?month=December&author=Ethan, the parts we usually care about are the *path* (~/blog/index~, which is available as ~request.path~) and any *query arguments* (~month=December&author=Ethan~). Note that a request can have the same parameter multiple times, as in http://localhost:8080/blog/index?author=Rick&author=Ethan. What this "means" is up to the application to decide.
+
+The most common and important kind of request is the kind that the web browser makes when it goes to a particular URL. In these requests, the web browser requests the contents of that URL. These requests are called "GET requests" because they use the GET method.
+
+In a GET request, Django provides access to the query parameters as ~request.GET~. So, in the above example, you could do ~request.GET["month"]~ to get ~December~. These parameters are always strings. If you need them to be something else, you'll need to convert them. (See https://docs.djangoproject.com/en/1.8/ref/request-response/#django.http.QueryDict for more.)
+
+HTML forms (which you may have seen before) are often submitted to web applications using the POST method. The POST method is used to send data to the web application. There are several other methods, but web browsers typically don't support them directly, so we'll skip them for now. In a POST request, parameters are accessed using ~request.POST~, which behaves the same as ~request.GET~.
+
+(You may have encountered the HTML attribute ~method~ before. ~method~ goes on ~<form>~ elements and you can have the method ~GET~ or ~POST~. This is what that's about.)
+
+The difference between ~GET~ and ~POST~ is that when you use ~GET~ in your application, you're saying that the request is /safe/. Safe requests shouldn't change the state of the application. RFC 7231 explains that a request is safe "if their defined semantics are essentially read-only".
+
+A request that updates a blog post would not be considered "safe", and should use POST. A request that searches for a blog post probably is "safe" and thus can use GET.
+
+HTTP requests contain a lot of information, and a web browser makes lots of them in normal usage.
 ** Future topics
 Local variables
 Methods
 Dynamic typing
 Tuples and how they differ from lists
 The "dot" syntax for looking up fields in models or calling methods
+Why I hate CSS
