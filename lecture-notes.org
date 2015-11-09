@@ -823,8 +823,7 @@ Read one of these two. I think the first one is "better" (it's certainly shorter
 http://www.jmarshall.com/easy/http/
 http://www.ntu.edu.sg/home/ehchua/programming/webprogramming/HTTP_Basics.html
 
-This provides some amount of overview of how forms work in HTML and HTTP, but with an emphasis on using them in Django. There's one point about forms in Django that you will need to know in order to get them working, and that's the csrf_token thing that they do in the example.
-
+This provides some amount of overview of how forms work in HTML and HTTP, but with an emphasis on using them in Django. There's one point about forms in Django that you will need to know in order to get them working, and that's the csrf_token thing that they do in the example. Stop at "More about Django Form classes".
 https://docs.djangoproject.com/en/1.8/topics/forms/
 
 Wikipedia's got some sort of light but dense information about forms themselves:
@@ -854,6 +853,8 @@ A request that updates a blog post would not be considered "safe", and should us
 HTTP requests contain a lot of information, and a web browser makes lots of them in normal usage.
 *** Demo
 Make a GET request with a form as well as a POST request. Log both in Wireshark. Show what they look like.
+
+Requests that contain uploaded files are a tiny bit different from those we saw today, but we won't cover exactly how they look on the wire.
 ** Future topics
 Local variables
 Methods
