@@ -855,7 +855,120 @@ HTTP requests contain a lot of information, and a web browser makes lots of them
 Make a GET request with a form as well as a POST request. Log both in Wireshark. Show what they look like.
 
 Requests that contain uploaded files are a tiny bit different from those we saw today, but we won't cover exactly how they look on the wire.
+** Functions
+A function is a "piece" of a program, or a mini-program. Like a program, a function is a series of instructions. A function is those instructions packaged up and made easy to re-use.
+
+A well-designed function serves as an abstraction -- something that lets you accomplish a task without 100% understanding what's going on inside.
+
+Functions are just one of several mechanisms available to make code packaged up and easy to re-use. We've already seen modules; modules are also sort of like mini-programs.
+
+To define a function, you write:
+
+#+begin_src python
+def my_function_name(some_argument):
+    """A docstring. This string describes the function."""
+
+    ... here is where you would put the stuff you want to do ...
+
+    return something  # if it makes sense for your function
+#+end_src
+
+To use it, you write:
+
+#+begin_src python
+my_function_name(123)
+#+end_src
+
+#+begin_src python
+result = my_function_name(123)
+#+end_src
+*** Recursion
+Week 1: 1 pair of mature rabbits
+Week 2: 1 pair of mature rabbits + 1 pair of immature
+Week 3: 2 pair of mature rabbits + 1 pair of immature
+Week 4: 3 pair of mature rabbits + 2 pair of immature
+Week 5: 5 pair of mature rabbits + 3 pair of immature
+Week 6: 8 pair of mature rabbits + 5 pair
+Week 7: 13 pair of mature + 8 pair
+*** Fibonacci series
+F_0 = 0
+F_1 = 1
+F_n = F_{n-1} + F_{n-2}
+
+fib(100) = 1 * fib(99) + 1 * fib(98)
+fib(99) = fib(98) + fib(97)
+fib(100) = 2 * fib(98) + 1 * fib(97)
+fib(98) = fib(97) + fib(96)
+fib(100) = 3 * fib(97) + 2 * fib(96)
+fib(97) = fib(96) + fib(95)
+fib(100) = 5 * fib(96) + 3 * fib(95)
+fib(96) = fib(95) + fib(94)
+fib(100) = 8 * fib(95) + 5 * fib(94)
+*** conversion to loop
+
+*** Homework
+#+begin_src python
+  def factorial(n):
+      """
+      Factorial function.
+
+      >>> fact(5)
+      120
+      >>> fact(6)
+      720
+      """
+      pass
+#+end_src
+
+#+begin_src python
+  def reverse_rec(s):
+      """
+      Reverse a string, recursively.
+      """
+      pass
+#+end_src
+
+#+begin_src python
+  def list_mult(l, n):
+      """
+      Repeat the list l as many times as n.
+
+      >>> list_mult([1, 2, 3], 2)
+      [1, 2, 3, 1, 2, 3]
+      >>> list_mult([1, 2], 3)
+      [1, 2, 1, 2, 1, 2]
+      """
+      pass
+#+end_src
+
+#+begin_src python
+  def flatten(lst):
+      """Take a deeply nested list and flatten it to a single level.
+
+      >>> flatten([1, 2, 3])
+      [1, 2, 3]
+      >>> flatten([[1], [2, 3], [4, 5, 6]])
+      [1, 2, 3, 4, 5, 6]
+      >>> flatten([1, [2, 3], [[4], [5, [6]]]])
+      [1, 2, 3, 4, 5, 6]
+      """
+      pass
+#+end_src
+
+#+begin_src python
+  def flatten_dict(d):
+      """Flatten a nested dictionary, using a period to separate nested keys.
+
+      Only works if nested keys are all strings.
+
+      >>> flatten_dict({'a': 1, 'b': {'foo': 2, 'bar': 3})
+      {'a': 1, 'b.foo': 2, 'b.bar': 3}
+      """
+      pass
+#+end_src
+
 ** Future topics
+binary search
 Local variables
 Methods
 Dynamic typing
