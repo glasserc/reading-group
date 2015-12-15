@@ -966,12 +966,290 @@ fib(100) = 8 * fib(95) + 5 * fib(94)
       """
       pass
 #+end_src
+** Complexity theory
+Complexity theory is a way to compare the efficiency of algorithms. Algorithms can't be compared directly; you end up having to compare implementations. Worse yet, those implementations also include implementations of languages, of compilers, and of computers themselves. Complexity theory is a way to get around this -- to abstract out the essence of the algorithm so it can be looked at directly.
 
+[N.B. Recall that algorithms are just sets of steps that you can follow to solve a problem, i.e. they're one step short of a program. But frequently it's easier to examine the algorithm when it's embodied in a program. Just be careful that you understand the costs of every operation that the programming language offers.]
+
+Frequently we want to estimate the cost of an algorithm, i.e. how many operations it takes to run, or how much memory it uses. Usually we'll estimate this cost using big-O notation (and its dorky relatives, big-theta and big-omega notation, which are a little academic even for academics). If an algorithm takes e.g. 5 n^2 + 3 n + 12 operations, we say it is "big O of n^2" -- that is, we take the biggest function of n, throw away everything else, and discard any constant factors. (Constant factors tend to be controlled by e.g. speed of hardware, programming language, and other non-algorithmy things that are nevertheless very important.) Sometimes it's enough to just estimate "number of operations" -- sometimes we want to compare against something else, such as "number of times we have to read from disk", or "number of network operations", or some other number of specific operations.
+
+Big-O notation tends to give an "upper bound" to the runtime of an algorithm, which is usually good enough for our purposes, but if you want, you can use big-omega to specify a "lower bound" or big-theta which is supposed to be a more exact bound (both upper and lower).
+
+Sometimes people talk about worst-case, best-case or average-case complexity.
+
+Sometimes you need two variables to express the complexity of an algorithm. Lots of graph theory algorithms require O(V+E) to run. (We'll talk more about graph theory later. It's not graphs in the sense of pictures of mathematical functions.)
+
+Remember that when you're implementing an algorithm, runtime is not the only consideration! Readability and maintainability usually trump runtime, because you usually only have one or two "hot spots" which need to go really fast (if any).
+*** Example
+http://pages.cs.wisc.edu/~vernon/cs367/notes/3.COMPLEXITY.html test yourself problem 2
+*** Underlying data structures and operations
+In order to really do big-O notation justice, you have to understand some of how the computer's memory works, because some operations are hidden by the way the programming language works.
+
+Computer memory is random-access. That means you can go to any place in memory with the same speed. It's almost like each byte of memory in RAM has its own telephone number, and all telephone numbers take the same amount of time to dial, so any byte is equally fast. [Note: this is a gross oversimplification that is nevertheless assumed in complexity theory.]
+
+A single Python variable, like say a variable that contains an int, is just 4 bytes of memory. Thus, to read a variable just takes four phone calls (or, we can say that it just takes one phone call, since we're disregarding coefficients (and also because a 32-bit computer reads memory 4 bytes at a time -- this is called a "machine word")).
+
+Simple mathematical operations are also counted as one single operation. [This is part of the same gross oversimplification.] We say that such an operation is constant-time or O(1).
+
+So how fast is this algorithm?
+
+#+begin_src python
+def foo(a, b):
+    x = 0
+    for i in range(b):
+        x += a
+
+    return x
+#+end_src
+
+A Python "list" is just a big batch of contiguous memory. That means that if the first element of the list is at phone number 1, the second element will be at phone number 2, and the third at phone number 3, and so on. If you know which index you want, you can just dial it directly -- so this is also one operation.
+
+So what's the asymptotic runtime of this program?
+
+#+begin_src python
+def elem(x, lst):
+    i = 0
+    while i < len(lst):
+        if x == lst[i]:
+            return True
+        i += 1
+    return False
+#+end_src
+
+What about this one?
+
+#+begin_src python
+def foo2(x, l):
+    i = len(l)    # len(l) ~= O(1)
+    while i > 0:
+        l[i] = l[i-1]
+        i -= 1
+    l[0] = x
+#+end_src
+
+#+begin_src python
+def foo3(x, l):
+    i = len(l)
+    while i > 0:
+        foo2(x, l)
+        i -= 1
+#+end_src
+
+Lists also store their size. If you add an element to a list that doesn't have space for it, it will have to find a bigger batch of memory and copy everything over. (What's the runtime of that?)
+
+Because this is expensive, we use a trick. Every time we increase the size of the list, we double the size. This way, we get to insert O(n) elements. This means that adding to the end of a list is, on average, O(1). This is called *amortized* constant time -- it's not really constant, but it's constant enough.
+
+How are dictionaries implemented? Basically, they're like lists, except that whatever you use as your key has to be turned into an index. This is called hashing and it's kind of magical. However, the good news is that lookups in a dictionary are constant-time (relative to the size of the dictionary) because you just have to hash the key and then look at that index.
+
+In a homework a few weeks ago, you implemented a "check if an element is in a list" operation. The runtime of that operation is O(n). In general, you can't do better, but if you know your list is sorted, you can. How? You'll probably come up with an algorithm called binary search.
+
+List:
+-1, 2,  5,  9,   15, 16,  18, 19, 20,  25, 35
+
+Find: 6.
+#+begin_src python
+  def flatten(lst):
+      new = []
+      for i in lst:
+          if not isinstance(i, list):
+              new.append(i)
+          else:
+              new.extend(flatten(i))
+
+      return new
+#+end_src
+
+*** Homework
+Implement the binary search algorithm. This is kind of naturally recursive too. What is its runtime?
+
+Read https://en.wikipedia.org/wiki/Tower_of_Hanoi. Come up with an algorithm to solve it. Implement it. How fast does it run?
+** Object-oriented programming
+Object-oriented programming is a paradigm or methodology that is found in a lot of modern programming languges. It's one way to conceptually decompose systems and write abstractions. It's not the only way, which is why Python supports a lot of other ways, but it's still an important way.
+*** Abstractions
+When you write a function, you're writing an abstraction -- you're defining a new kind of operation which is made up of smaller, more basic operations. Knowing how to use the new operation liberates you from having to use the underlying smaller operations.
+
+Programming is very very often about abstractions in one form or another, and choosing good ones to write and writing them well can be very challenging. (The exercises you guys have been doing are all essentially about implementing an abstraction that someone else chose for you.)
+*** Classes
+When writing functions, the abstraction you're creating is one of behavior. (This function does that.) In object-oriented programming, your abstraction bundles both behavior and state. This is kind of an abstract idea, so here's an example.
+
+Let's say we want to write a program that models some users' reading habits. We might want to do stuff like this:
+
+#+begin_src python
+  alexs_book = {'title': "The Wise Man's Fear",
+                'current_page': 10}
+
+  my_kindle = {'current_book': "Pride and Prejudice",
+               'account': 'ethan@example.com',
+               'books': [
+                   {'title': "Pride and Prejudice",
+                    'current_page': 213},
+                   {'title': "So You Want To Be A Wizard",
+                    'current_page': 1},
+                   {'title': "Furies of Calderon",
+                    'current_page': 92}
+               ]
+  }
+
+  def turn_book_page(book):
+      book['current_page'] += 1
+
+  def turn_kindle_page(kindle):
+      # FIXME: This code has bugs.
+      current_book = kindle['current_book']
+      turn_book_page(kindle['books'][current_book])
+
+#+end_src
+
+We've defined some kinds of ad-hoc data structures here that correspond to books and book-like devices. These data structures correspond to *state* -- some kind of mutable information about current reality. A Kindle is more complicated than a book, so it has more (and different) state.
+
+We've also introduced some operations to manipulate these data structures. However, you have to know which data structure you have when you want to use the operation. If you write a program that works for both books AND Kindles, you have a problem. You'd have to be sure never to call a Kindle function on a book, and vice versa, or else your program would break messily.
+
+To make it a little easier, maybe you could write a function like this:
+
+#+begin_src python
+  def turn_page(book_or_kindle):
+      # What goes here???
+      pass
+#+end_src
+
+But in order to reliably determine what thing you have, you'd have to add another field to store that it's a book or a Kindle. The whole thing gets very messy -- dicts aren't required to always have the same keys, but books probably do.
+
+Instead we define something called a *class*, which represents the underlying model. We use these to stamp out *objects*, which resemble the class. That might look like this:
+
+#+begin_src python
+  class Book(object):
+      def __init__(self, title, current_page):
+          self.title = title
+          self.current_page = current_page
+
+      def turn_page(self):
+          self.current_page += 1
+
+  class Kindle(object):
+      def __init__(self, account, current_book, books):
+          self.account = account
+          self.current_book = current_book
+          self.books = books
+
+      def turn_page(self):
+          self.books[self.current_book].turn_page()
+
+  alexs_book = Book("The Wise Man's Fear", 10)
+
+  my_kindle = Kindle('ethan@example.com', "Pride and Prejudice", [
+      Book("Pride and Prejudice", 213),
+      Book("So You Want To Be A Wizard", 1),
+      Book("Furies of Calderon", 92)
+      ])
+
+  my_kindle.turn_page()
+#+end_src
+
+This code says to define two classes, which have certain data and
+support certain operations. Then, I *instantiate* those classes, which
+means to create an object, or instance, of those classes. When I do
+this, the ~__init__~ function for those classes is called (this is
+called the *constructor*). Both classes also have other operations,
+which are called *methods* (a method is just a function defined on a
+class).
+
+Both classes have a common ~turn_page~ method. That means I can always call ~turn_page~ without having to care about what object it is.
+
+To access data in an object, you use the ~object.attribute~ syntax we've seen. To call a method on the object, you write ~object.method()~.
+
+To define methods, define a function inside the body of a ~class~ statement. These functions will take an additional ~self~ argument, which refers to the object itself, and can access its data or its methods directly.
+
+The details of this process vary from language to language. Some, like
+Java, require you to formally create an *interface* saying what
+operations books and booklike things are expected to perform, and what
+operations are available to the person using the class or object
+(to try to limit misuse). But Python tends to be a bit more permissive here because of the culture of "We're all adults here". Look up "duck typing" for more about this.
+*** Inheritance
+Sometimes you want to define some new class. It's a lot like a more specialized version of an existing class, and you don't want to copy all the existing code (DRY; because copying is bad). To do this, we define a *subclass*.
+
+#+begin_src python
+  class Paperwhite(Kindle):
+      def __init__(self, *args, **kwargs):
+          super(Paperwhite, self).__init__(*args, **kwargs)
+          self.is_backlight_on = False
+
+      def turn_on_backlight(self):
+          self.is_backlight_on = True
+
+  moms_paperwhite = Paperwhite('donna@example.com', .....)
+  moms_paperwhite.turn_page()
+  moms_paperwhite.turn_on_backlight()
+#+end_src
+
+[The ~super~ function might behave a little bit differently in Python 3.]
+
+Here, we are defining a new kind of Kindle. A Paperwhite is
+automatically a Kindle, although not all Kindles are
+Paperwhites. Paperwhites are a kind of Kindle that has a
+backlight. Because Paperwhites *inherit* from Kindles, all Kindle
+operations are still available in Paperwhites. (So you can still do
+~turn_page~ on one.) It also offers some new functionality (a
+~turn_on_backlight~ call).
+
+The constructor for the Paperwhite needs to set up the Paperwhite, which means it needs to set up the Kindle part of the Paperwhite. To do this, it calls its *superclass* using the ~super()~ call.
+
+The constructor for the Paperwhite does this neat trick with ~*args~ and ~**kwargs~. What this is saying is, whatever arguments you give me will be collected, whether they are positional (~*args~) or named (~**kwargs~). Then, when calling the superclass, it can un-collect them in the same way.
+*** Design
+There's a lot of material out there about "proper" object-oriented design and programming. Some essentials:
+
+- What are the subjects of discourse in the domain? What are their relationships? What operations do they support?
+
+- A constructor should ensure that the object is in a coherent state, and operations should always leave the object in a coherent state.
+
+- A subclass should follow an is-a relationship, and never a has-a relationship. A Paperwhite is-a Kindle. (Although some cultures, like that of Java and Go, discourage inheritance and prefer the use of has-a relationships and delegation.)
+
+- If you ever find yourself doing something like
+
+#+begin_src python
+  if foo.type == 'book':   # or isinstance(foo, Book)
+      # do something with books...
+      pass
+  elif foo.type == 'kindle':
+      # do something with kindles...
+      pass
+#+end_src
+
+... you should restructure it as a common method.
+*** Differences with Django models
+Django models have field definitions which have a clear type.
+
+Django models have clear relationships with other objects.
+*** TODO exercises for *args, **kwargs
+** Modules
+The ~import~ statement introduces a "module", which is an object that represents the code loaded from some other file.
+
+Let's say we put this code in a file called file_loader.py:
+
+#+begin_src python
+class FileLoader(object):
+    pass
+
+def load_file(filename):
+    pass
+#+end_src
+
+And in another file (let's call it main.py) we put this code:
+
+#+begin_src python
+import file_loader
+#+end_src
+
+... we create a variable ~file_loader~ which represents a "module". If we print ~file_loader~, it will show us that it is a module and what file the module was loaded from. We can henceforth access the ~FileLoader~ class and the ~load_file~ function using the syntax ~file_loader.FileLoader~ and ~file_loader.load_file~. If we get tired of typing these things, we can also make them available directly using:
+
+#+begin_src python
+from file_loader import FileLoader, load_file
+#+end_src
+
+Now we can just use ~FileLoader~ and ~load_file~.
+
+If you have lots of modules together, you can group them in a "package". A package is just a directory with a ~__init__.py~ file in it. See https://docs.python.org/3.5/tutorial/modules.html#packages for more info.
 ** Future topics
-binary search
 Local variables
-Methods
 Dynamic typing
 Tuples and how they differ from lists
-The "dot" syntax for looking up fields in models or calling methods
 Why I hate CSS
