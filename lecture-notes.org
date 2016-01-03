@@ -1248,6 +1248,34 @@ from file_loader import FileLoader, load_file
 Now we can just use ~FileLoader~ and ~load_file~.
 
 If you have lots of modules together, you can group them in a "package". A package is just a directory with a ~__init__.py~ file in it. See https://docs.python.org/3.5/tutorial/modules.html#packages for more info.
+** Return of the Django
+*** Review
+Django, on startup, examines your site to discover its main application. Then it *imports* that application's settings file and URLs file (i.e. modules you wrote). Then it looks at your settings to identify the other applications in your site and imports all their models. Finally, it begins listening for requests from a browser. When a request comes in, it uses the rules from ~urls.py~ to decide what view will handle it.
+
+Defining a model in Django is done by defining a subclass of ~django.db.models.Model~. Unlike normal Python classes, models tend to have explicit lists of fields and types. Like normal Python classes, they can have their own methods.
+
+Defining a view in Django is done by defining a function (or callable object). This function must take at least one argument, which is a ~Request~ object, but it can take more if it wants to use parts of the URL. This function must also return a ~Response~ object. Normally a ~Response~ is produced by rendering a template, but it doesn't have to be. It's traditional to put views in a ~views.py~ module, but they don't have to be.
+
+Django forms can be defined by defining a subclass of ~django.forms.Form~. Like models, you define all fields that your form needs and what type they are. A form needs access to a ~POST~ or ~GET~ from a real ~Request~ and it will tell you if the data was valid.
+
+Defining a template is done by putting a file in a templates directory. Templates are usually kept in files like ~templates/appname/viewname.html~. Templates use the Django template format. To put a variable in a template, use ~{{ variable }}~. You can do some processing of variables using filters like ~{{ x | first }}~. You also get some other commands like ~{% if %}~ and ~{% for %}~. Templates can *extend* other templates. The "parent template" defines blocks and structure, and the child template fills in those parts.
+
+To add CSS (or eventually, JavaScript) to a page, you'll use the ~staticfiles~ application. In templates, you'll use the ~{% load staticfiles %}~ command to get access to it, and ~{% static "appname/file.css" %}~ to create a link to the file.
+
+CSS is a set of rules that change the appearance of HTML elements. Each rule has a selector that determines what elements it will apply to:
+
+- ~foo~ applies to any HTML element with the tag ~<foo>~
+- ~.foo~ applies to any HTML element with ~foo~ among its ~class~ attribute. Note that this kind of class is not like an OOP class!
+- ~#foo~ applies to any HTML element with ~foo~ as its ID. IDs are supposed to be globally unique, and classes need not be.
+- If ~X~ is a selector, and ~Y~ is a selector, the selector ~X Y~ matches any element who matches ~Y~ that is inside an element matched by ~X~.
+- ~X > Y~ matches any ~Y~ child of a node matching ~X~.
+- ~X, Y~ matches any node matching ~X~ or any node matching ~Y~.
+
+A rule also has a bunch of properties, which are written inside braces. A property has a name and a value, e.g. ~color: blue;~. Each property allows different kinds of values. Of particular interest are ~float~ and ~position~ properties, which help you put together more complicated layouts. (Although it seems like the forward-looking thing is to use something called flexbox.)
+
+Git is a system that tracks the content of your code, and thus their changes. It can be hosted on Github for free if you don't mind your code being public. You create a new project using ~git init~, choose what changes to record using ~git add~, and then record them with ~git commit~. Some files (like a Django database or a virtualenv!) shouldn't be tracked, so you can put their names in a file called ~.gitignore~.
+*** Class-based views
+Because most Django views are pretty similar, there is a mechanism to reduce boilerplate in views. You can define a class which is a subclass of an existing Django built-in view class, and customize it. See https://docs.djangoproject.com/en/1.9/topics/class-based-views/intro/.
 ** Future topics
 Local variables
 Dynamic typing
