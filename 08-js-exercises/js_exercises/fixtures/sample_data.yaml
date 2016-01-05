@@ -19,7 +19,7 @@
   fields:
     period_id: 1
     code: MATH101
-    name: Intro to Algebra
+    name: Algebra
     professor: Eckert
     credits: 4
     grade: C-
@@ -54,7 +54,7 @@
 - model: transcript.Period
   pk: 2
   fields:
-    month: 1
+    month: 3
     year: 2009
     transcript_id: 1
 - model: transcript.Course
@@ -71,7 +71,7 @@
   fields:
     period_id: 2
     code: MATH102
-    name: Advanced Algebra
+    name: Preprecalculus
     professor: Williams
     credits: 4
     grade: B
@@ -79,9 +79,9 @@
   pk: 7
   fields:
     period_id: 2
-    code: ENGL101
-    name: Intro to English
-    professor: Gibbons
+    code: PHYS101
+    name: Intro to PHysics
+    professor: Lambeau
     credits: 4
     grade: D+
 
@@ -117,13 +117,253 @@
     name: PreOlde English
     professor: Gibbons
     credits: 4
-    grade: D+
+    grade: F
 - model: transcript.Course
   pk: 11
   fields:
     period_id: 3
+    code: PHYS101
+    name: Mechanics
+    professor: Chukwunonso
+    credits: 4
+    grade: D+
+
+- model: transcript.Period
+  pk: 4
+  fields:
+    month: 3
+    year: 2010
+    transcript_id: 1
+- model: transcript.Course
+  pk: 12
+  fields:
+    period_id: 4
+    code: MATH202
+    name: Advanced Precalculus
+    professor: Williams
+    credits: 4
+    grade: B
+- model: transcript.Course
+  pk: 13
+  fields:
+    period_id: 4
+    code: LING101
+    name: Artificial Languages I
+    professor: Wong
+    credits: 2
+    grade: A-
+- model: transcript.Course
+  pk: 14
+  fields:
+    period_id: 4
+    code: SPOR201
+    name: Penultimate Frisbee
+    professor: Herbert
+    credits: 1
+    grade: B+
+- model: transcript.Course
+  pk: 15
+  fields:
+    period_id: 4
+    code: CSCI124
+    name: Haskell
+    professor: Eckert
+    credits: 4
+    grade: B
+
+- model: transcript.Period
+  pk: 5
+  fields:
+    month: 9
+    year: 2012
+    transcript_id: 1
+- model: transcript.Course
+  pk: 16
+  fields:
+    period_id: 5
+    code: PSYC101
+    name: Intro to Hyperbole
+    professor: Tokamak
+    credits: 4
+    grade: C
+- model: transcript.Course
+  pk: 17
+  fields:
+    period_id: 5
+    code: LING102
+    name: Artificial Languages II
+    professor: Krishnamoorthy
+    credits: 2
+    grade: B+
+- model: transcript.Course
+  pk: 18
+  fields:
+    period_id: 5
+    code: SPOR201
+    name: Penultimate Frisbee
+    professor: Herbert
+    credits: 1
+    grade: B+
+- model: transcript.Course
+  pk: 19
+  fields:
+    period_id: 5
+    code: CSCI201
+    name: Data Structures and Algorithms
+    professor: Akella
+    credits: 4
+    grade: B
+
+- model: transcript.Period
+  pk: 6
+  fields:
+    month: 3
+    year: 2013
+    transcript_id: 1
+- model: transcript.Course
+  pk: 20
+  fields:
+    period_id: 6
+    code: PSYC110
+    name: Basic Memetics
+    professor: Tokamak
+    credits: 4
+    grade: B
+- model: transcript.Course
+  pk: 21
+  fields:
+    period_id: 6
+    code: CSCI223
+    name: Graph Theory
+    professor: Akella
+    credits: 4
+    grade: B
+- model: transcript.Course
+  pk: 22
+  fields:
+    period_id: 6
+    code: CSCI242
+    name: Network Programming
+    professor: Lin
+    credits: 4
+    grade: B-
+- model: transcript.Course
+  pk: 23
+  fields:
+    period_id: 6
+    code: LING201
+    name: Artificial Linguistics
+    professor: Krishnamoorthy
+    credits: 2
+    grade: B+
+
+- model: transcript.Period
+  pk: 7
+  fields:
+    month: 6
+    year: 2013
+    transcript_id: 1
+- model: transcript.Course
+  pk: 24
+  fields:
+    period_id: 7
     code: ENGL101
     name: Intro to English
     professor: Gibbons
     credits: 4
-    grade: D+
+    grade: B
+- model: transcript.Course
+  pk: 25
+  fields:
+    period_id: 7
+    code: ENGL124
+    name: Freshman Comp
+    professor: Gibbons
+    credits: 4
+    grade: D
+
+- model: transcript.Period
+  pk: 8
+  fields:
+    month: 9
+    year: 2013
+    transcript_id: 1
+- model: transcript.Course
+  pk: 28
+  fields:
+    period_id: 8
+    code: CSCI262
+    name: Operating Systems
+    professor: Lin
+    credits: 4
+    grade: B
+- model: transcript.Course
+  pk: 29
+  fields:
+    period_id: 8
+    code: ECON101
+    name: Intro to Scarcity
+    professor: Morgan
+    credits: 4
+    grade: D
+- model: transcript.Course
+  pk: 30
+  fields:
+    period_id: 8
+    code: PSYC102
+    name: Most Amazing Hyperbole Ever
+    professor: Tokamak
+    credits: 4
+    grade: C+
+- model: transcript.Course
+  pk: 31
+  fields:
+    period_id: 8
+    code: ENGL209
+    name: Ancient English
+    professor: Gibbons
+    credits: 4
+    grade: D
+
+- model: transcript.Period
+  pk: 9
+  fields:
+    month: 1
+    year: 2014
+    transcript_id: 1
+- model: transcript.Course
+  pk: 32
+  fields:
+    period_id: 9
+    code: PSYC201
+    name: Advanced Friendship
+    professor: Evans
+    credits: 4
+    grade: B+
+- model: transcript.Course
+  pk: 33
+  fields:
+    period_id: 9
+    code: ECON102
+    name: Advanced Scarcity
+    professor: Morgan
+    credits: 4
+    grade: B
+- model: transcript.Course
+  pk: 34
+  fields:
+    period_id: 9
+    code: CSCI401
+    name: Design of Compilers
+    professor: Ingalls
+    credits: 4
+    grade: C+
+- model: transcript.Course
+  pk: 35
+  fields:
+    period_id: 9
+    code: ENGL212
+    name: Quantum English
+    professor: Leventhal
+    credits: 4
+    grade: C
