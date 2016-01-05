@@ -15,7 +15,7 @@
     {% for period in transcript.period_set.all %}
     <div class="period" id="period-{{ period.year }}-{{ period.month }}">
       <h2>{{ period.title }}</h2>
-      <table>
+      <table class="grades">
         <thead>
           <th class="code">Code</th>
           <th class="course">Course</th>
