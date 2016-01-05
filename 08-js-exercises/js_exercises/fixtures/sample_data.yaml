@@ -1,0 +1,129 @@
+- model: transcript.Student
+  pk: 1
+  fields:
+    name: Mario F. Smith
+    graduation: 2015-01-28T00:00:00
+- model: transcript.Transcript
+  pk: 1
+  fields:
+    student_id: 1
+
+- model: transcript.Period
+  pk: 1
+  fields:
+    month: 9
+    year: 2008
+    transcript_id: 1
+- model: transcript.Course
+  pk: 1
+  fields:
+    period_id: 1
+    code: MATH101
+    name: Intro to Algebra
+    professor: Eckert
+    credits: 4
+    grade: C-
+- model: transcript.Course
+  pk: 2
+  fields:
+    period_id: 1
+    code: ENGL101
+    name: Intro to English
+    professor: Sheeran
+    credits: 4
+    grade: F
+- model: transcript.Course
+  pk: 3
+  fields:
+    period_id: 1
+    code: CHEM101
+    name: Intro to Chemistry
+    professor: Burton
+    credits: 4
+    grade: D+
+- model: transcript.Course
+  pk: 4
+  fields:
+    period_id: 1
+    code: SPOR101
+    name: Ultimate Frisbee
+    professor: Herbert
+    credits: 1
+    grade: B
+
+- model: transcript.Period
+  pk: 2
+  fields:
+    month: 1
+    year: 2009
+    transcript_id: 1
+- model: transcript.Course
+  pk: 5
+  fields:
+    period_id: 2
+    code: CSCI101
+    name: Python
+    professor: Eckert
+    credits: 4
+    grade: B+
+- model: transcript.Course
+  pk: 6
+  fields:
+    period_id: 2
+    code: MATH102
+    name: Advanced Algebra
+    professor: Williams
+    credits: 4
+    grade: B
+- model: transcript.Course
+  pk: 7
+  fields:
+    period_id: 2
+    code: ENGL101
+    name: Intro to English
+    professor: Gibbons
+    credits: 4
+    grade: D+
+
+- model: transcript.Period
+  pk: 3
+  fields:
+    month: 9
+    year: 2009
+    transcript_id: 1
+- model: transcript.Course
+  pk: 8
+  fields:
+    period_id: 3
+    code: CSCI101
+    name: Python
+    professor: Eckert
+    credits: 4
+    grade: B+
+- model: transcript.Course
+  pk: 9
+  fields:
+    period_id: 3
+    code: MATH201
+    name: Precalculus
+    professor: Williams
+    credits: 4
+    grade: B
+- model: transcript.Course
+  pk: 10
+  fields:
+    period_id: 3
+    code: ENGL201
+    name: PreOlde English
+    professor: Gibbons
+    credits: 4
+    grade: D+
+- model: transcript.Course
+  pk: 11
+  fields:
+    period_id: 3
+    code: ENGL101
+    name: Intro to English
+    professor: Gibbons
+    credits: 4
+    grade: D+
