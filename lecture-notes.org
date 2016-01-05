@@ -1276,6 +1276,220 @@ A rule also has a bunch of properties, which are written inside braces. A proper
 Git is a system that tracks the content of your code, and thus their changes. It can be hosted on Github for free if you don't mind your code being public. You create a new project using ~git init~, choose what changes to record using ~git add~, and then record them with ~git commit~. Some files (like a Django database or a virtualenv!) shouldn't be tracked, so you can put their names in a file called ~.gitignore~.
 *** Class-based views
 Because most Django views are pretty similar, there is a mechanism to reduce boilerplate in views. You can define a class which is a subclass of an existing Django built-in view class, and customize it. See https://docs.djangoproject.com/en/1.9/topics/class-based-views/intro/.
+** JavaScript
+JavaScript is another language used in the web stack. A JavaScript interpreter is embedded in the browser and it executes JavaScript loaded on a web page. You can use JavaScript to make a web page interactive without requiring more requests back to the server. You can also use it to do graphical and animation stuff if you want to do something that you can't do in CSS (although CSS tends to expand to swallow these tasks).
+
+JavaScript originally started out as a toy language that was stuffed into the browser, and JavaScript code was written by people who didn't really know much about programming, but over time it's grown more and more sophisticated and "cool" until real people started writing code in it. In particular, JavaScript has escaped the confines of the browser and can be run on the server now using a thing called NodeJS. Now there's an incredible amount of energy and technology in the JavaScript scene despite the fact that pretty much everyone still agrees that it's actually a pretty crappy language. In particular, because of its peculiar history:
+
+- There are some things that don't have an accepted "technique" yet -- the equivalent of Python's ~import~ statements and modules don't exist in the core JavaScript language, and for a few years we've been in a period of development of possible alternatives and tools. I only know a little bit about these and can't offer deep wisdom about them.
+
+- There are some things that you can do in multiple ways, some of which are just bad or discouraged. Compare with "The Zen of Python", which says "There should be one -- and preferably only one -- obvious way to do it." I'm going to tend to cover the ways that I consider "most correct", although I'll also try to follow up with other "less correct" ways and explain why I think they're less correct, so that you can be prepared if you see them in the field.
+
+- Like HTML, JavaScript is designed to be forgiving of errors. So often, when you do something wrong, the program will just try to make the best of it and continue, as though it were better to do anything at all instead of signal an error. What this means is that sometimes you will get an error with your program far after the actual error happened, so keep an eye out for that. In Python, of course, "Errors should not pass silently, unless explicitly silenced".
+
+- Sometimes language features combine to do bizarre things. See e.g. http://wtfjs.com/ when you're a little more familiar with the language.
+
+What I am covering is meant to get you up and running with basic tools for client-side programming. I haven't kept up to date with all the hot new tech. I'd encourage you to look at/experiment with other technologies if you want to see more about what's out there. In particular, there seem to be a bunch of frameworks for "reactive programming", which promises to make the sorts of things that we're going to do here seem very clumsy. Additionally, there are a few client-side programming languages which offer improvements to JavaScript, and they "compile down" to JavaScript to run in the browser. In particular I'm thinking of PureScript and TypeScript. In five years' time, any of these might be the thing to know, and this lesson may look like cave scratches by Neanderthals.
+
+Most importantly, the goal of this lesson is to get you up and running with JavaScript and maybe also a library called jQuery. The goal of this "unit" is to get you to be able to add a drag-and-drop functionality for items in the dollhouse to allow a user to position them directly (rather than specifying an x/y coordinate).
+*** Adding JavaScript to a webpage
+The "correct" way is going to be to add a ~<script>~ tag to your HTML. This is going to be very similar to how you added CSS. In your generated output HTML, you want to have the tag: ~<script type="text/javascript" src="path-to-file.js"></script>~. (You'll have to use the ~static~ plugin the same way we did in CSS.) (Note that if you try to use a self-closing ~<script/>~, the browser may not understand it.)
+
+Once you get to a certain size of webpage, you'll probably need to start developing libraries that depend on each other and you'll need to pick a mechanism for importing libraries (I think everyone has standardized on something called "AMD modules" and "require" by now). You'll also eventually need to figure out a mechanism to turn lots of small JavaScript files into one compressed JavaScript file to reduce page load times. That's outside the scope of this course, but be aware that what we're doing isn't the most correct thing forever.
+
+Less correct is to just slap JavaScript into the HTML directly. Sometimes you'll see this when using third-party JavaScript, like for Google Analytics. This looks like:
+
+#+BEGIN_SRC html
+<script type="text/javascript">
+  // ... code goes here
+</script>
+#+END_SRC
+
+Either way, your JavaScript will be run every time you refresh the page. You can use your browser's web development tools to verify that the JS is getting loaded.
+*** Output in JavaScript
+The closest thing to ~print~ in JavaScript is called ~console.log~. You use it like this:
+
+#+BEGIN_SRC javascript
+console.log("Hello world!");
+#+END_SRC
+
+Any output sent to ~console.log~ will go to your web browser's "console", which should be available also in development tools. When you refresh the page, the console is wiped clean and your program is rerun.
+
+If you're debugging and want to show variables, you can also do that:
+
+#+BEGIN_SRC javascript
+console.log("Showing a variable", x);
+#+END_SRC
+
+There is also a command called ~alert~ which will show an annoying little pop-up message. You can also use this to output stuff if you're debugging.
+
+There's also a command called ~document.write()~ which will "write" stuff to your HTML. Sometimes ad network code will do this. Don't do this, because it can really screw up your HTML.
+*** Overview of JavaScript syntax
+#+BEGIN_SRC javascript
+// this is a comment
+// all statements should end in semicolons
+var x = 1;  // this is a variable; you should declare all variables
+var y = 2, z = 3; // you can declare multiple variables on the same line
+var options = {  // this is an "object", which is like a Python dict
+    name: "Ethan",    // keys must be strings and need not be quoted
+    course: "Computer Science Reading Group"
+};  // N.B. semicolon here!
+var myName = options.name; // "object" access
+var alsoMyName = options["name"]; // same as above
+var numbers = [1, 2, 4]; // array literal
+var howManyNumbers = numbers.length; // array length
+var someNumber = numbers[0]; // array access
+f(x, y);  // function calls are basically the same, but no keyword arguments
+obj.meth(x, y); // method calls are also basically the same
+
+var showText = function(x, y){  // defining functions
+    console.log("text!");
+};  // N.B. semicolon here!
+
+if (x == 5) {
+    console.log("x = 5!!!");
+}
+else if (x == 6) {
+    console.log("x = 6!!!");
+}
+else {
+    console.log("x was something else!");
+}
+
+// while loop
+var i = 0;
+while (i < numbers.length) {
+    var thisNumber = numbers[i];
+    console.log("number " + i + " was " + thisNumber);
+    ++i;
+}
+
+// for loop in JS is not much different from a while loop
+for (var i = 0; i < numbers.length; ++i) {
+    var thisNumber = numbers[i];
+    // do something with a number
+}
+
+// The most elegant way to iterate over an array in JS is the forEach() function
+// which takes a function as an argument.
+numbers.forEach(function(thisNumber, i) {
+    console.log("number " + i + " was " + thisNumber);
+});
+
+// you can also iterate over properties of an object using for .. in
+// Be careful with this because it also gets properties of "parent" objects!
+for (var key in options) {
+    var option = options[key];
+    console.log("option " + key + " was " + option);
+}
+#+END_SRC
+
+Some things to note:
+
+- Although the JavaScript language says that statements must end in semicolons, if you leave them out, there is a process called Automatic Semicolon Insertion (ASI) which happens, and often makes your program behave correctly. For this reason, some practitioners prefer not to explicitly put semicolons in. I don't have strong feelings on the subject, but basically follow the school of thought that says "ASI is explicitly about fixing an incorrect program, so if you don't put semicolons, your program is incorrect". See http://inimino.org/~inimino/blog/javascript_semicolons for more about this.
+
+- In Python, variables are local by default, and can be made global using the ~global~ keyword. In JavaScript, variables are global by default, and have to be made local using the ~var~ keyword. You almost always want your variables to be local, so you should always declare them using ~var~.
+
+- I keep writing JavaScript "object" in quotes because these are not like the objects from object oriented programming we've seen in Python. They're really more like dicts or hash tables. Object oriented programming in JS is quite a bit different than in Python. In particular, there's no particular way to define a class, and inheritance functions differently in JS than in Python. For these reasons, most practitioners avoid OOP when doing JS.
+
+- In a JavaScript "object", keys don't have to be quoted, so JavaScript ~{name: "Ethan"}~ is the same as Python ~{"name": "Ethan"}~. However, in Python, keys can be full expressions, so you can have e.g. ~x = "name"; return {x: "Ethan"}~ . You can't do this in JavaScript; you'd have to do ~var x = "name"; var tmp = {}; tmp[x] = "Ethan"; return tmp;~ .
+
+- If you access something in an "object" that doesn't exist, you don't get an error, but rather you get a special value called ~undefined~. Trying to do anything with ~undefined~ is an error.
+
+- In JavaScript, lists are called Arrays. Many things seem like they should be arrays but aren't.
+
+- Arrays behave basically like you expect, but without any of the useful functionality you might be used to from Python. For example, if you want to get the last element, you can't just do ~array[-1]~ -- you have to do ~array[array.length-1]~.
+
+- Despite the fact that we don't really do OOP in JS, there are still methods. Writing a method is very strange in JS, but using them is usually pretty much what you'd expect.
+
+- In Python, you can put a comma at the end of a dictionary or list declaration, but generally this isn't done in JS.
+
+- Defining a function is done using the ~function~ keyword. Note that in JS, it's very common to create an anonymous function by using the ~function~ expression, without putting it in any variable. The ~function~ keyword is like the ~lambda~ in Python, except without any of the restrictions on the Python version. Arguments to the function go in the parentheses, and the body goes in the braces, like you'd expect.
+
+- Note that in JS, you can call a function with different numbers of arguments than it was defined with. Any arguments that don't get values get set to ~undefined~. Any extra arguments are ignored (but can be accessed if you want -- more about this later).
+
+Other people sometimes define functions using this syntax:
+
+#+BEGIN_SRC javascript
+function showText(x, y) {
+    console.log("text!");
+} // N.B. No semicolon
+#+END_SRC
+
+I don't like this syntax as much because it makes it less obvious whether the function is global or local. Additionally, sometimes I don't want to just define a function called ~showText~, but sometimes I want to call it ~someObject.showText~ -- with the style that I use, it's easy to change ~var showText =~ to ~someObject.showText =~, whereas with this style, I have to remove the name ~showText~ and move it to the beginning of the line.
+*** The DOM
+When we were talking about CSS, we talked a little bit about the DOM -- the structure of HTML elements on your web page. Besides writing stuff to the console and popping up message boxes, the main thing you do in JavaScript is manipulate the DOM. You can add classes to a page, add CSS styles to an element, or replace page content entirely. This lets you make a web page that can change.
+
+The way you find DOM elements to manipulate is very similar to the ways we identify elements for CSS rules. First, you can select an element with a given ID using ~var someElem = document.getElementById("some-id")~. Then, you can:
+
+#+BEGIN_SRC javascript
+  console.log(someElem.className);  // access its "class" attribute
+  someElem.className = "class1 class2"; // replace its "class" attribute
+  // pop quiz.. how do we add a class to the element without replacing the existing ones?
+
+  // you can also replace an element's content
+  someElem.innerHTML = '<div class="some-class">New content</div>';
+
+  // this adds "inline styles" to an element, the same as if you used
+  // the "style" attribute on the element
+  someElem.style.color = "blue";
+  // this is the same as adding style="color: blue;" to the element
+#+END_SRC
+
+You can also fetch a bunch of elements that match a CSS selector. You can use ~var someNodes = document.querySelectorAll("div.some-class");~. This returns a ~NodeList~, which is one of several things in JavaScript that are sort of array-like but not really Arrays. It has a ~length~ and numeric elements from ~0~ to ~length-1~. See also https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelectorAll.
+
+This ought to change all ~div~ nodes with the ~some-class~ class to have only the ~new-class~ class.
+
+#+BEGIN_SRC javascript
+var someNodes = document.querySelectorAll("div.some-class");
+for (var i = 0; i < someNodes.length; i++) {
+    var node = someNodes[i];
+    node.className = "new-class";
+}
+#+END_SRC
+*** jQuery
+Despite the fact that JavaScript is a pretty craptacular language, underneath all its terrible design choices and perplexing behavior, there's actually the germ of a pretty decent language. With this language, it's possible to do clever and beautiful things. One of these things is the jQuery library. jQuery is like a Swiss army knife for client-side JavaScript programming. It contains lots of utilities to find and modify DOM elements as well as more basic stuff like operating on elements of array-like things. jQuery also helps you in the case where you have to support old libraries that don't support all the functionality that you need -- it provides *polyfills*, which are just a fancy way of saying they provide implementations of missing stuff so that your code can work even if the browser doesn't provide everything you need.
+
+[N.B. Old versions of IE used to make our life the hardest, but in version 9 and up, it seems like it's getting acceptable.]
+
+[N.B. Of course, if someone is using NodeJS, which is server-side, a client-side library like jQuery doesn't make sense!]
+
+To use jQuery, put another ~script~ tag before your ~script~ tag, like: ~<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>~. We're using Google's hosted jQuery (see https://developers.google.com/speed/libraries/), but in a real site we'd probably host our own and/or come up with a more sophisticated loading strategy. Anyhow, the browser will load and run the jQuery library, which will define a global variable called ~$~. Then, it will load and run yours, which can use it to do e.g.
+
+#+BEGIN_SRC javascript
+$('div.some-class').each(function(i, elem) {
+    $(elem).attr('class', 'new-class');
+});
+#+END_SRC
+
+or even
+
+#+BEGIN_SRC javascript
+$('div.some-class').attr('class', 'new-class');
+#+END_SRC
+
+See http://learn.jquery.com/ and http://api.jquery.com/ for more info.
+
+As time has gone on, more and more of the functionality that you used to need jQuery for has been moved into browsers themselves. For example, you can use CSS animations where previously you had to use jQuery animations, and ~document.querySelectorAll~ is basically the same as jQuery's ~find~ function. Because of this, and because jQuery is such a big library, some practitioners have always avoided it, either by replacing it with other libraries or with no library at all. See also http://youmightnotneedjquery.com/ for comparisons of how to do tasks with jQuery and with "vanilla JavaScript". Although the central premise of the website is that jQuery isn't really needed, I think almost all of the jQuery operations look way easier to read and maintain than the vanilla JS ones. This is a point of contention in the community, with some people jokingly responding to JavaScript questions with "just use jQuery", and others making fun of noobs who use jQuery even when they don't have to.
+
+[N.B. The function given to the .each() method on jQuery objects gets arguments in a different order from the JS Array.forEach() method! This has tripped me up a number of times.]
+*** Events
+JavaScript is also good at listening for and responding to events. Using jQuery, you can do:
+
+#+BEGIN_SRC javascript
+$(".some-selector").on("click", function() {
+    // do something
+    // "this" is available to refer to the element on which the event happened
+});
+#+END_SRC
+*** Page load event
+Although you will normally put your scripts in the ~<head>~ block of your page, the rest of the document hasn't loaded yet. Usually it's a good idea to set up code to run after the page is loaded using e.g. the jQuery ~ready~ function.
+
+#+BEGIN_SRC javascript
+$(document).ready(function() {
+    alert("OK, rock and roll!!");
+});
+#+END_SRC
 ** Future topics
 Local variables
 Dynamic typing
