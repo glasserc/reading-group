@@ -921,14 +921,6 @@ fib(100) = 8 * fib(95) + 5 * fib(94)
 #+end_src
 
 #+begin_src python
-  def reverse_rec(s):
-      """
-      Reverse a string, recursively.
-      """
-      pass
-#+end_src
-
-#+begin_src python
   def list_mult(l, n):
       """
       Repeat the list l as many times as n.
@@ -937,6 +929,17 @@ fib(100) = 8 * fib(95) + 5 * fib(94)
       [1, 2, 3, 1, 2, 3]
       >>> list_mult([1, 2], 3)
       [1, 2, 1, 2, 1, 2]
+      """
+      pass
+#+end_src
+
+#+begin_src python
+  def reverse_rec(s):
+      """Reverse a string, recursively, one character at a time.
+
+      This doesn't really make as much sense in Python, but some
+      languages have more recursive structures for strings that make
+      this more natural.
       """
       pass
 #+end_src
