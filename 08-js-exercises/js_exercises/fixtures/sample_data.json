@@ -1,0 +1,844 @@
+[
+{
+    "model": "contenttypes.contenttype",
+    "fields": {
+        "model": "logentry",
+        "app_label": "admin"
+    },
+    "pk": 1
+},
+{
+    "model": "contenttypes.contenttype",
+    "fields": {
+        "model": "permission",
+        "app_label": "auth"
+    },
+    "pk": 2
+},
+{
+    "model": "contenttypes.contenttype",
+    "fields": {
+        "model": "group",
+        "app_label": "auth"
+    },
+    "pk": 3
+},
+{
+    "model": "contenttypes.contenttype",
+    "fields": {
+        "model": "user",
+        "app_label": "auth"
+    },
+    "pk": 4
+},
+{
+    "model": "contenttypes.contenttype",
+    "fields": {
+        "model": "contenttype",
+        "app_label": "contenttypes"
+    },
+    "pk": 5
+},
+{
+    "model": "contenttypes.contenttype",
+    "fields": {
+        "model": "session",
+        "app_label": "sessions"
+    },
+    "pk": 6
+},
+{
+    "model": "contenttypes.contenttype",
+    "fields": {
+        "model": "student",
+        "app_label": "transcript"
+    },
+    "pk": 7
+},
+{
+    "model": "contenttypes.contenttype",
+    "fields": {
+        "model": "transcript",
+        "app_label": "transcript"
+    },
+    "pk": 8
+},
+{
+    "model": "contenttypes.contenttype",
+    "fields": {
+        "model": "period",
+        "app_label": "transcript"
+    },
+    "pk": 9
+},
+{
+    "model": "contenttypes.contenttype",
+    "fields": {
+        "model": "course",
+        "app_label": "transcript"
+    },
+    "pk": 10
+},
+{
+    "model": "transcript.student",
+    "fields": {
+        "name": "Mario F. Smith",
+        "graduation": "2015-01-28T00:00:00Z"
+    },
+    "pk": 1
+},
+{
+    "model": "transcript.transcript",
+    "fields": {
+        "student": 1
+    },
+    "pk": 1
+},
+{
+    "model": "transcript.period",
+    "fields": {
+        "month": 9,
+        "year": 2008,
+        "transcript": 1
+    },
+    "pk": 1
+},
+{
+    "model": "transcript.period",
+    "fields": {
+        "month": 3,
+        "year": 2009,
+        "transcript": 1
+    },
+    "pk": 2
+},
+{
+    "model": "transcript.period",
+    "fields": {
+        "month": 9,
+        "year": 2009,
+        "transcript": 1
+    },
+    "pk": 3
+},
+{
+    "model": "transcript.period",
+    "fields": {
+        "month": 3,
+        "year": 2010,
+        "transcript": 1
+    },
+    "pk": 4
+},
+{
+    "model": "transcript.period",
+    "fields": {
+        "month": 9,
+        "year": 2012,
+        "transcript": 1
+    },
+    "pk": 5
+},
+{
+    "model": "transcript.period",
+    "fields": {
+        "month": 3,
+        "year": 2013,
+        "transcript": 1
+    },
+    "pk": 6
+},
+{
+    "model": "transcript.period",
+    "fields": {
+        "month": 6,
+        "year": 2013,
+        "transcript": 1
+    },
+    "pk": 7
+},
+{
+    "model": "transcript.period",
+    "fields": {
+        "month": 9,
+        "year": 2013,
+        "transcript": 1
+    },
+    "pk": 8
+},
+{
+    "model": "transcript.period",
+    "fields": {
+        "month": 1,
+        "year": 2014,
+        "transcript": 1
+    },
+    "pk": 9
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "C-",
+        "period": 1,
+        "name": "Algebra",
+        "credits": 4,
+        "code": "MATH101",
+        "professor": "Eckert"
+    },
+    "pk": 1
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "F",
+        "period": 1,
+        "name": "Intro to English",
+        "credits": 4,
+        "code": "ENGL101",
+        "professor": "Sheeran"
+    },
+    "pk": 2
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "D+",
+        "period": 1,
+        "name": "Intro to Chemistry",
+        "credits": 4,
+        "code": "CHEM101",
+        "professor": "Burton"
+    },
+    "pk": 3
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 1,
+        "name": "Ultimate Frisbee",
+        "credits": 1,
+        "code": "SPOR101",
+        "professor": "Herbert"
+    },
+    "pk": 4
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B+",
+        "period": 2,
+        "name": "Python",
+        "credits": 4,
+        "code": "CSCI101",
+        "professor": "Eckert"
+    },
+    "pk": 5
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 2,
+        "name": "Preprecalculus",
+        "credits": 4,
+        "code": "MATH102",
+        "professor": "Williams"
+    },
+    "pk": 6
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "D+",
+        "period": 2,
+        "name": "Intro to PHysics",
+        "credits": 4,
+        "code": "PHYS101",
+        "professor": "Lambeau"
+    },
+    "pk": 7
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B+",
+        "period": 3,
+        "name": "Python",
+        "credits": 4,
+        "code": "CSCI101",
+        "professor": "Eckert"
+    },
+    "pk": 8
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 3,
+        "name": "Precalculus",
+        "credits": 4,
+        "code": "MATH201",
+        "professor": "Williams"
+    },
+    "pk": 9
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "F",
+        "period": 3,
+        "name": "PreOlde English",
+        "credits": 4,
+        "code": "ENGL201",
+        "professor": "Gibbons"
+    },
+    "pk": 10
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "D+",
+        "period": 3,
+        "name": "Mechanics",
+        "credits": 4,
+        "code": "PHYS101",
+        "professor": "Chukwunonso"
+    },
+    "pk": 11
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 4,
+        "name": "Advanced Precalculus",
+        "credits": 4,
+        "code": "MATH202",
+        "professor": "Williams"
+    },
+    "pk": 12
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "A-",
+        "period": 4,
+        "name": "Artificial Languages I",
+        "credits": 2,
+        "code": "LING101",
+        "professor": "Wong"
+    },
+    "pk": 13
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B+",
+        "period": 4,
+        "name": "Penultimate Frisbee",
+        "credits": 1,
+        "code": "SPOR201",
+        "professor": "Herbert"
+    },
+    "pk": 14
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 4,
+        "name": "Haskell",
+        "credits": 4,
+        "code": "CSCI124",
+        "professor": "Eckert"
+    },
+    "pk": 15
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "C",
+        "period": 5,
+        "name": "Intro to Hyperbole",
+        "credits": 4,
+        "code": "PSYC101",
+        "professor": "Tokamak"
+    },
+    "pk": 16
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B+",
+        "period": 5,
+        "name": "Artificial Languages II",
+        "credits": 2,
+        "code": "LING102",
+        "professor": "Krishnamoorthy"
+    },
+    "pk": 17
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B+",
+        "period": 5,
+        "name": "Penultimate Frisbee",
+        "credits": 1,
+        "code": "SPOR201",
+        "professor": "Herbert"
+    },
+    "pk": 18
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 5,
+        "name": "Data Structures and Algorithms",
+        "credits": 4,
+        "code": "CSCI201",
+        "professor": "Akella"
+    },
+    "pk": 19
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 6,
+        "name": "Basic Memetics",
+        "credits": 4,
+        "code": "PSYC110",
+        "professor": "Tokamak"
+    },
+    "pk": 20
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 6,
+        "name": "Graph Theory",
+        "credits": 4,
+        "code": "CSCI223",
+        "professor": "Akella"
+    },
+    "pk": 21
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B-",
+        "period": 6,
+        "name": "Network Programming",
+        "credits": 4,
+        "code": "CSCI242",
+        "professor": "Lin"
+    },
+    "pk": 22
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B+",
+        "period": 6,
+        "name": "Artificial Linguistics",
+        "credits": 2,
+        "code": "LING201",
+        "professor": "Krishnamoorthy"
+    },
+    "pk": 23
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 7,
+        "name": "Intro to English",
+        "credits": 4,
+        "code": "ENGL101",
+        "professor": "Gibbons"
+    },
+    "pk": 24
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "D",
+        "period": 7,
+        "name": "Freshman Comp",
+        "credits": 4,
+        "code": "ENGL124",
+        "professor": "Gibbons"
+    },
+    "pk": 25
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 8,
+        "name": "Operating Systems",
+        "credits": 4,
+        "code": "CSCI262",
+        "professor": "Lin"
+    },
+    "pk": 28
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "D",
+        "period": 8,
+        "name": "Intro to Scarcity",
+        "credits": 4,
+        "code": "ECON101",
+        "professor": "Morgan"
+    },
+    "pk": 29
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "C+",
+        "period": 8,
+        "name": "Most Amazing Hyperbole Ever",
+        "credits": 4,
+        "code": "PSYC102",
+        "professor": "Tokamak"
+    },
+    "pk": 30
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "D",
+        "period": 8,
+        "name": "Ancient English",
+        "credits": 4,
+        "code": "ENGL209",
+        "professor": "Gibbons"
+    },
+    "pk": 31
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B+",
+        "period": 9,
+        "name": "Advanced Friendship",
+        "credits": 4,
+        "code": "PSYC201",
+        "professor": "Evans"
+    },
+    "pk": 32
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "B",
+        "period": 9,
+        "name": "Advanced Scarcity",
+        "credits": 4,
+        "code": "ECON102",
+        "professor": "Morgan"
+    },
+    "pk": 33
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "C+",
+        "period": 9,
+        "name": "Design of Compilers",
+        "credits": 4,
+        "code": "CSCI401",
+        "professor": "Ingalls"
+    },
+    "pk": 34
+},
+{
+    "model": "transcript.course",
+    "fields": {
+        "grade": "C",
+        "period": 9,
+        "name": "Quantum English",
+        "credits": 4,
+        "code": "ENGL212",
+        "professor": "Leventhal"
+    },
+    "pk": 35
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "add_logentry",
+        "name": "Can add log entry",
+        "content_type": 1
+    },
+    "pk": 1
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "change_logentry",
+        "name": "Can change log entry",
+        "content_type": 1
+    },
+    "pk": 2
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "delete_logentry",
+        "name": "Can delete log entry",
+        "content_type": 1
+    },
+    "pk": 3
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "add_permission",
+        "name": "Can add permission",
+        "content_type": 2
+    },
+    "pk": 4
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "change_permission",
+        "name": "Can change permission",
+        "content_type": 2
+    },
+    "pk": 5
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "delete_permission",
+        "name": "Can delete permission",
+        "content_type": 2
+    },
+    "pk": 6
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "add_group",
+        "name": "Can add group",
+        "content_type": 3
+    },
+    "pk": 7
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "change_group",
+        "name": "Can change group",
+        "content_type": 3
+    },
+    "pk": 8
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "delete_group",
+        "name": "Can delete group",
+        "content_type": 3
+    },
+    "pk": 9
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "add_user",
+        "name": "Can add user",
+        "content_type": 4
+    },
+    "pk": 10
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "change_user",
+        "name": "Can change user",
+        "content_type": 4
+    },
+    "pk": 11
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "delete_user",
+        "name": "Can delete user",
+        "content_type": 4
+    },
+    "pk": 12
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "add_contenttype",
+        "name": "Can add content type",
+        "content_type": 5
+    },
+    "pk": 13
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "change_contenttype",
+        "name": "Can change content type",
+        "content_type": 5
+    },
+    "pk": 14
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "delete_contenttype",
+        "name": "Can delete content type",
+        "content_type": 5
+    },
+    "pk": 15
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "add_session",
+        "name": "Can add session",
+        "content_type": 6
+    },
+    "pk": 16
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "change_session",
+        "name": "Can change session",
+        "content_type": 6
+    },
+    "pk": 17
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "delete_session",
+        "name": "Can delete session",
+        "content_type": 6
+    },
+    "pk": 18
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "add_student",
+        "name": "Can add student",
+        "content_type": 7
+    },
+    "pk": 19
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "change_student",
+        "name": "Can change student",
+        "content_type": 7
+    },
+    "pk": 20
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "delete_student",
+        "name": "Can delete student",
+        "content_type": 7
+    },
+    "pk": 21
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "add_transcript",
+        "name": "Can add transcript",
+        "content_type": 8
+    },
+    "pk": 22
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "change_transcript",
+        "name": "Can change transcript",
+        "content_type": 8
+    },
+    "pk": 23
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "delete_transcript",
+        "name": "Can delete transcript",
+        "content_type": 8
+    },
+    "pk": 24
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "add_period",
+        "name": "Can add period",
+        "content_type": 9
+    },
+    "pk": 25
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "change_period",
+        "name": "Can change period",
+        "content_type": 9
+    },
+    "pk": 26
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "delete_period",
+        "name": "Can delete period",
+        "content_type": 9
+    },
+    "pk": 27
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "add_course",
+        "name": "Can add course",
+        "content_type": 10
+    },
+    "pk": 28
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "change_course",
+        "name": "Can change course",
+        "content_type": 10
+    },
+    "pk": 29
+},
+{
+    "model": "auth.permission",
+    "fields": {
+        "codename": "delete_course",
+        "name": "Can delete course",
+        "content_type": 10
+    },
+    "pk": 30
+}
+]
