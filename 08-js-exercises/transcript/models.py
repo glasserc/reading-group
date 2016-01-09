@@ -28,6 +28,8 @@ class Period(models.Model):
         season = "Fall"
         if self.month == 3:
             season = "Spring"
+        if self.month == 6:
+            season = "Summer"
         return "Semester of {}-{}".format(self.year, season)
 
     def average(self):
