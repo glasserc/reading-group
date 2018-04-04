@@ -1275,8 +1275,384 @@ A rule also has a bunch of properties, which are written inside braces. A proper
 Git is a system that tracks the content of your code, and thus their changes. It can be hosted on Github for free if you don't mind your code being public. You create a new project using ~git init~, choose what changes to record using ~git add~, and then record them with ~git commit~. Some files (like a Django database or a virtualenv!) shouldn't be tracked, so you can put their names in a file called ~.gitignore~.
 *** Class-based views
 Because most Django views are pretty similar, there is a mechanism to reduce boilerplate in views. You can define a class which is a subclass of an existing Django built-in view class, and customize it. See https://docs.djangoproject.com/en/1.9/topics/class-based-views/intro/.
+** Data modeling
+"Show me your [functions] and conceal your [data structures], and I shall continue to be mystified. Show me your [data structures], and I won’t usually need your [functions]; they’ll be obvious." -- Fred Brooks
+
+When developing a system to represent some problem or some information, you will have to choose a representation from among many that seem viable. This set of notes focuses on modeling your data in a way that is the most "correct". Correct means that it is easiest to understand and maintain, and that in particular it does the most to "make illegal states unrepresentable" (in the words of Yaron Minsky).
+
+I'm not calling this section "data structures" because "data structures" is a field of computer science that focuses in minute detail on the efficiency of a particular mechanism. Data structures people care about things like whether you store a matrix by rows or by columns. That field of study can be interesting, but this set of notes is not concerned with such minute detail or even efficiency except in the vaguest of terms. We care more about "abstract data types", which define a set of operations supported by some structure.
+
+By the same token, I'm going to focus on modeling your data for correctness assuming some sort of abstract memory in some sort of pure conceptual domain. I'll touch on translating these data models into specific programming language types, but translating them into e.g. a relational system is beyond the scope of this set of notes. There's usually some well-known way to "encode" what you want into the tool that you're using (or to "decode" that tool's structures into the original author's semantics).
+
+Another related topic is about dividing up a system into smaller systems and components. This is called system architecture and I'm not super good at it. There are much fewer hard-and-fast rules about architecture, and a lot depends on the business context you're operating in. The same system can be described as "enterprise" or "industrial strength" or "heavyweight" or "baroque" or "overengineered". Architecture is not the emphasis of this set of notes.
+
+Some amount of this will vary a little bit from language to language, but not too much. What seems to vary more is the lengths that people will go to in the pursuit of correctness, and how much they are willing to compromise correctness in exchange for efficiency (or even for convenience).
+*** Basic types
+Some "fundamental" types that you might use to model an individual datum.
+**** Integer
+A good starting point for data modeling is the "integer" type. Integers are familiar from mathematics; they represent numbers like -5, 1, 17, but nothing "fractional". Integers are discrete. They support addition, subtraction, multiplication, division, and "modulo".
+
+Some languages distinguish between "signed" and "unsigned" integers. Signed integers can be positive or negative (i.e. they have a plus sign or a minus sign in front of them). Unsigned integers can only be non-negative, i.e. 0 or greater. (If you need a non-positive number, you can just use an unsigned integer and assume it's always the opposite, i.e. additive inverse, of the number you want.)
+
+Some languages force you to choose a "size" for your integer, usually measured in bytes, but for most web development, this doesn't matter all that much.
+
+Integers are a good choice for modeling:
+
+- Numeric quantities.
+- "Scores", i.e. ratings of things like priorities or rank. When doing this, be clear about whether higher is better or lower is better.
+- "Enums", i.e. mutually exclusive categories, especially if they have an implicit "order". More about this later.
+
+Integers are a bad choice for:
+
+- Anything that "seems" numeric but doesn't behave numerically. As a good example, the book "Programming Perl" points out that the ZIP code of Cambridge, MA is 02140, but unlike numeric values, 02140 isn't the same as 2140, which isn't a valid ZIP code.
+**** Float
+For cases where your numeric quantity has fractional parts, one option is to use a "float", or a floating-point number. "Floating-point" means that although your data has a fixed amount of precision, that precision can be used to represent very small numbers (i.e. 0.00000000000000000000005) or very large ones (i.e. 50000000000000000000000.0). That is, the decimal point can "float" around within the precision you are allowed.
+
+Most languages offer floating point numbers implemented directly using the processor's built-in floating point capacity, which usually follows a standard called IEEE 754. IEEE 754 mandates a standard where numbers are represented as decimals in base-2. This means that it's possible to represent 0.5 (which is 0.1 in base 2), but 0.2 is 1/5, which isn't possible to represent exactly in base 2 (it would be 0.0011 repeating). That means that when you try to represent 0.2 as a float, what you actually "get" might be either 0.19999999999999999999.... or 0.2000000000000000000000000001, depending on what floats are possible and which ones are closest to what you wanted. See https://docs.python.org/2/faq/design.html?highlight=floating%20point#why-are-floating-point-calculations-so-inaccurate for more.
+
+JavaScript has the unusual property that there is one "type" for both integers and floats, called "number". That means that e.g. modular arithmetic "works" on floating point numbers (it does not in Python).
+
+Floats are a good choice for:
+
+- Approximate numerical quantities requiring a very large range (but relatively small precision).
+- Or generally any kind of numeric quantity where you want to do math but don't really care how precise the math is.
+
+Floats are a bad choice for:
+
+- Money. Seeing something like "$5.01" may make you think of a floating-point quantity, but because floating point arithmetic isn't "exact", you can accumulate "error" of fractional cents, which can be scary. In this case, one trick is to store integer numbers of cents instead, and just convert them to dollars on input/output. Otherwise you could use Decimal, below.
+- More generally, if you "only" need a specific range and precision isn't really negotiable, you can use an integer number of something that's very large (years) or very small (microseconds).
+**** Bignum/Decimal
+In many languages, normal "integers" only have a certain range -- for example, a common one is up to 2^64. This is the "natural" size of the processor and operations on such integers are very fast. Beyond this, someone has to do work to translate "bigger" integers into integers of this size when doing math. This works similarly to how humans learn their multiplication tables up to e.g. 10 x 10, and bigger multiplication problems are "decomposed" into smaller ones. In this way, you can store arbitrarily large integers, which are called "arbitrary precision" or (sometimes, more casually) "bignums". Ideally they work exactly the same as regular integers, but sometimes special syntax is needed to use them.
+
+In Python, bignums are called ~long~, although ~long~ can mean other things in C-like languages. Also in Python, integer math will "gracefully" return longs if you exceed the capacity of an int.
+
+Once you have arbitrarily-large integers, it's possible to have arbitrary-precision floating-point by just using a bignum + some information saying where the decimal point goes. In Python, arbitrary-precision floating-points are called ~Decimal~ and they are available in the ~decimal~ module.
+
+Both bignums and decimals are less efficient than "pure" integers and floats, but are usually fast enough.
+
+Bignums are a good choice for:
+
+- Very large numbers for which mathematical operations nevertheless need to be completely precise. (This is common in cryptography, for instance.)
+
+Decimals are a good choice for:
+
+- Numbers with digits after the decimal place that you nevertheless want to represent exactly. A good example is when you want to store a number like "0.2" and don't want it to come back out as "0.20000000000000000000001" (although sometimes you don't care).
+**** Booleans
+Booleans are central to a lot of computer science. They can be represented using a single bit of memory and only have two values (true and false).
+
+Booleans are a good choice for:
+
+- Individual attributes which can only be true or false (there are no "unknown" or "n/a" or "ask" option).
+- "Flags", i.e. a bunch of on-off information that isn't mutually exclusive. For example, a file might have can_read, can_write, and can_execute flags, and each might be true regardless of the other two. (If it *is* mutually exclusive, i.e. if you can only write things you can also read, then you want an enum; see below.)
+
+Note that you can combine a lot of flags into an integer using bitwise AND, OR, NOT, and XOR operations. This used to be a thing people would do in low-level languages to save a few bytes of memory; these days it's more likely a way to combine arguments to a function. I'd generally consider this bad practice these days, both because individual bytes of memory aren't so precious and most languages offer some better way to pass in a wide variety of arguments (for instance, Python has keyword arguments, or you can pass in a struct of all possible arguments (see below)).
+**** Enum
+A Boolean is a type that can either be true or false, but not both at the same time, and not anything else. Sometimes you also want to define a type that can only be one of a small set of possible values. I'm calling this an "enum", which is the name it's given in C/C++. It stands for "enumerated type", i.e. you've enumerated all possible values for this type.
+
+For example, my microwave can be standing by (not cooking), or it can be cooking, or it can have finished cooking (in which case it displays "end"). Because the microwave cannot be both cooking and finished cooking at the same time, this can be an enum.
+
+Enums are good candidates for anything that seems kind-of-Boolean-y, but isn't quite Boolean, or any other kind of mutually exclusive state.
+
+For a while, Python didn't have a "standard" enum functionality built-in, and people had differences of opinion about what it should actually do and how it should actually work. However, Python 3.4 offers https://docs.python.org/3/library/enum.html.
+
+Some more modern languages offer something that might be called "enum" but is a little more complicated. I'll cover these in "Tagged unions", below.
+**** String
+A string represents a piece of text, meant to be shown to or received from a human.
+
+In Python 3, this is called ~str~. In Python 2, this is called ~unicode~. (This is the major difference between Python 2 and Python 3.)
+
+Some systems (SQL) require you to know ahead of time how much text you are going to store, the same way that you need to know the size of your integers.
+
+Strings are a good choice for:
+
+- Names. (But be aware of https://www.w3.org/International/questions/qa-personal-names)
+- Addresses.
+- Other actual human text.
+- Sometimes, as a serialization format for other, more complicated data, like dates or enums. Note that one danger with strings is that they can become a kind of default unstructured type whenever something is too complicated to represent or someone is too lazy to do things "right". See http://wiki.c2.com/?StringlyTyped. This tendency isn't necessarily bad, just something to be aware of.
+**** Bytestrings
+A bytestring is a sequence of bytes. Unlike a string, a bytestring is not usually shown to a human. Instead, a bytestring represents something that needs to be sent to an input or output device, without human understanding being necessary.
+
+In Python 3, this is called ~bytes~. In Python 2, this is called ~str~, which is a bad name for it and a major reason why Python 3 exists.
+
+It's pretty rare to need bytestrings in modeling data, but they are worth a mention because a lot of systems get them wrong, and even when they don't, it can be helpful to understand how they're supposed to be used. If you ever encounter bytestrings, I recommend this presentation by Ned Batchelder: https://nedbatchelder.com/text/unipain.html.
+**** Optional/nullable
+Sometimes you want to talk about a datum that is always there or necessary. Other times you want to talk about one that may be present or absent. The latter is sometimes called a "nullable" type, with "null" representing the absent value. Nullability isn't a type itself, but it's a thing that modifies other types.
+
+Being clear about whether something is nullable or not, and what null means, can be very important. Going from a place where "null" is allowed to a place where "null" is forbidden is an accident waiting to happen. For this reason, "null" has been called "the billion-dollar mistake". (See https://en.wikipedia.org/wiki/Null_pointer#History.)
+
+In some languages and/or for some contexts, nullable types are the default; in others, nullability is something that is explicitly mentioned. In Python, the equivalent of "null" is called ~None~, and any variable can usually be ~None~. (In Django models, nulls are forbidden by default.) JavaScript, of course, has two null-esque values, ~null~ and ~undefined~. In C and a lot of related languages (C++, Java, Go), there are "primitive" types which can never be ~NULL~ (you can't have a nullable int) and "pointer" types which are always nullable (you can't insist on a non-nullable object). A couple languages let you choose between nullable or non-nullable versions of any type (for example, in C#, you can have ~int?~ to describe a nullable int, although it seems all pointers can still be null).
+
+In a language where things can be null, some people will "null-check" incoming arguments of every function and throw an exception if they're null. I personally don't like doing this, since:
+
+- It adds a lot of boilerplate to all functions.
+- You have to do it not just on incoming arguments, but anything returned from any function, unless you're sure that the function will never return a null (including in the future if someone modifies it).
+- You're already going to get a ~NullPointerException~, even without code to explicitly check for nulls; you just get to change the ~NullPointerException~ into something that tells you *what* was null.
+
+The "cutting edge" approach is called an "option" type, which is a tagged union (about which see below) where you either have ~Some(value)~ or ~Nothing~. See also https://en.wikipedia.org/wiki/Option_type. Because ~Some(value)~ is different from ~value~, you can never accidentally use an "optional" thing as though it were guaranteed to be present.
+
+Nullable types are often used for:
+
+- Data that might be missing.
+- Functions that can "fail" in a soft way -- where no answer is possible.
+*** Compound
+These are choices for when you need to model something more complicated than a single datum. Note that these structures are all composed, themselves, of structures, so you can "nest" them, or combine them like Legos into ever more complicated possibilities. (For example, "a list of departments, each of which is a map of strings to people records".)
+**** Record
+A record type lets you define a new kind of "data", usually by putting together existing kinds of "data". A record type defines a "format" which consists of several fields, each with its own type. You can then create records of this type which necessarily conform to this format.
+
+In a procedural language like C, this is called a struct. In a classical object-oriented language, these are your classes and your instances. In some languages, tuples can be considered a kind of simplistic record type. (In Python, tuples are more like lists, which are collections -- about which see below.) In a database system, record types are like tables, and records themselves are the rows in that table.
+
+A classic example of structs would be something like a two-dimensional point on the screen, which could be defined as something like:
+
+#+begin_src c
+struct Point {
+    int x;
+    int y;
+}
+#+end_src
+
+In other words, a point has an (integer) x coordinate and an (integer) y coordinate. You can't have a point without both, and a point can't be created with any additional information.
+
+Records are good for:
+
+- Combining related data together.
+- Combining data of different types together. If you have a fixed number of different things, you have a record. If you have lots of the same kind of thing, you don't have a record, you have a list.
+- Combining data with the set of operations that can be performed on it. A common use of records is to let you "encapsulate" some kind of internal state while exposing only well-defined operations to other code.
+
+Records are one of the main ways to define new abstractions, letting you create a thing closer to some real-world or domain-specific concept rather than always considering the nitty-gritty of what has to happen. For this reason, they are also sometimes overused; the Gang-of-Four book "Design Patterns" describes mechanisms you can use to solve lots of different problems in a language like Java that has nothing but classes. Many of these "patterns" are foreign or disappear completely in other languages. Many of the problems that these patterns try to solve are solved simpler using e.g. functions.
+
+Instead of records, you can equivalently store data in "parallel arrays". In this scheme, you don't define e.g. an array of people, each of which has a name, an address, and an age, but instead you define an array of names, an array of addresses and an array of ages. Although this is equivalent, it's very rare that this is a good idea.
+**** Tagged union
+Some modern languages (Rust, Haskell, Swift) have a kind of enum-esque functionality where you define not only the possible cases, but additional information that goes with it. Sometimes these are referred to as "tagged unions" or "tagged constructors". As an example, let's say we let our users specify colors using either a "named" color like ~blue~, or a hex-encoded color like ~#00ff00~, or an RGBA color like ~rgba(0, 255, 0, 0.1)~. You might represent this using something like:
+
+#+begin_src rust
+enum CSSColor {
+  NamedColor(String),
+  HexEncoded(i32, i32, i32),
+  RGBA(i32, i32, i32, f32)
+}
+#+end_src
+
+These kinds of structures are like a fusion of a record and an enum, and they're super neat when you have them available. Usually, to examine them and extract the useful data, you need some kind of "pattern-matching" operation.
+
+If your language has tagged unions, odds are good that it has an option type instead of nullability (see above).
+**** List
+A list represents an ordered group of zero or more elements. A list does not have a fixed size and can grow or shrink over the course of a program.
+
+In Python, this is the ~list~ class. In JavaScript, this is called ~Array~ (although it isn't a true array, about which more in a second). In C++ it's called a vector and in Rust it's called ~Vec~.
+
+Some languages also expose a more basic ordered collection called an array which corresponds to a large block of computer memory with a fixed size. Unlike lists, arrays cannot grow or shrink. However, a list can be implemented using arrays -- when you need to grow the list, you copy everything to a new, bigger, array.
+
+It's generally a good idea for all the elements in your list to be the same type (or offer some common functionality). If you have elements of different types, you probably want a record type.
+
+Although a list has relatively few constraints, you can always try to use a list in a more restrictive way. As an example, you can maintain a sorted list by being careful where you insert elements. Having a sorted list may be valuable for certain kinds of algorithms (i.e. binary search).
+
+Lists are a good fit when:
+
+- You want to say "several" of something without saying anything else.
+- You want to process a bunch of items in a uniform way.
+***** List-like variations
+Stacks and queues are a restricted version of lists where you can only insert and remove elements in certain places. In a stack, you insert ("push") and remove ("pop") only from one end, which creates a "last-in-first-out" order. In a queue, you insert ("enqueue") only at one end and remove ("dequeue") only from the other end, which creates a "first-in-first-out" order. These can be useful if you want to process elements in a certain constrained order. A good example is tracking nested elements, where a stack is almost always what you want.
+
+A dequeue ("double-ended queue") is a list that supports inserts and removals from both ends and can be used as either a stack or a queue, depending on which ends you use for what.
+
+A priority queue is a list where each element has a "priority". Removal of the "next" element produces the element with the lowest priority. This means that unlike a regular queue, elements that are added later might get removed (and thus processed) earlier.
+
+Because all of these types are just lists but with fewer operations, they are mainly useful in code/architecture and not in data modeling (you'd just use a list instead).
+**** Set
+A set represents an unordered group of elements, with no element being repeated. You can use a set if you want to enforce that elements are unique (usually duplicate elements are silently dropped).
+
+Mathematical "sets" also have certain popular operations which may be present -- union, intersection, subtraction -- but these operations can often be present on lists as well.
+
+In Python, there is a built-in ~set~ class. If your language doesn't have a set type, the usual way to implement it is using a map (see below).
+**** Map (associative array)
+An associative array is a collection of key-value pairs. The key serves as an ID for the value: given a key, you can look up the value, but you may not be able to go from the value back to the key. In other words, it associates a value with a key. "Associative array" is kind of an unwieldy term, so this abstract data type is usually called a map or hash table instead. Each key can only be associated with one value -- inserting a second key-value pair with the same key will overwrite the first.
+
+Python is unusual in that it calls this class ~dict~ or dictionary. (An English dictionary associates words, which are the keys, with definitions, which are the values.) In most other languages, "map" or "hash table" is used.
+
+For most of JavaScript's history, an "Object" type was the closest thing available to a map. An Object is more correctly used in JavaScript to represent records, but because the syntax is very convenient, people still sometimes use "objects" as maps that can only have string keys. (These days, JavaScript also has a Map class.)
+
+Maps are very versatile structures:
+
+- Instead of a list, you can always use a map with an integer key. For this reason, some languages don't bother building lists or arrays but go straight to maps. PHP's "array" type is a map for this reason.
+- If you don't have a "set" type in your language, you can use just the "keys" part of a map, ignoring the values.
+
+Maps are a good idea when:
+
+- You want to be able to look up a given value based on its ID.
+- No two items can have the same ID. If you need to have key-value pairs where the key isn't unique, i.e. not really a key, then you can just use a list of pairs.
+- You have keys of some type and values of some possibly different type. If your values are of different types, you might have a record. (N.B. Django template "contexts" are maybe an exception to this rule, where values are all just string-esque things.)
+- You're using some record type and you want to add information to it, but you can't because it's an external library or otherwise "closed". You can use the record as the key, and the value can be whatever supplemental information you want to track. (N.B. Some languages have restrictions on what kinds of things can be keys, like they have to be hashable or orderable or whatever.)
+**** Intermission: IDs
+When your data model contains any kind of collection, you'll often need to find or refer to an element in that collection. In other words, you'll need to take some information and use it to uniquely identify some element. What you're doing is defining a thing that refers to an element, or a reference.
+
+A reference must be permanent (it should never change, no matter what happens to the thing it refers to), and it must be unique (it should only ever identify one thing), and you almost always want every item to be "referable".
+
+It might be possible that some element of the data uniquely identifies it, but this is vanishingly rare or maybe even impossible. Much more common is for a developer to think some field is guaranteed to be permanent until someone in Customer Satisfaction needs to edit it, or for some field to be "pretty unique" until management wants to be able to track the old owner AND the new owner of that phone number, or everyone needs to have a social security number until someone doesn't. For these reasons, when designing a way to refer to things, you almost always want to have an arbitrary ID as the reference. If you control the arbitrary ID and don't let it be a property of the data in any way, you can ensure that it is permanent (because why would you change it?), unique (because you control its generation), and mandatory (because you can assign one to everything).
+
+If you're referring to an element in a list, you might be tempted to use its index as its ID. Be careful with this, because lists almost always change, which invalidates all the IDs. If you need permanent IDs into a structure, you probably want a map, using some kind of arbitrary ID as the key.
+
+Most relational databases default to generating arbitrary IDs using integers that increase starting at 1. This has a certain convenience, but has some weaknessess too. In a distributed system, two machines could choose the "next" ID at the same time, which would cause a collision. Additionally, sometimes having IDs be predictable is a security weakness -- imagine SnapChat where you could see any post by starting at 1 and increasing until you ran out! So other systems use random numbers, or strings, or UUIDs, or something else.
+
+On the other hand, IDs are also one of the most "internal" parts of a system that users will still interact with, so choosing a good scheme for them can be a critical user interface decision.
+
+Note that if you have a relatively small fixed set of IDs, you basically have an ~enum~. In that case, there may not be a need for an arbitrary ID.
+**** Trees
+A tree is a collection of nodes that has a certain recursive structure. A tree can be either an empty collection of nodes, or one node that has "children" trees (which themselves can be either empty or nodes that have trees, which themselves etc.). Trees show up in lots of places in computing -- a filesystem is a tree where folders can contain folders which contain folders, etc., and HTML elements contain children which are themselves HTML elements.
+
+Trees are the focus of a lot of exercises in a data structures and algorithms course, and occasionally you will have a problem which is appropriate to model as a tree. The most common ones involve "folder"-like structures, or language-like structures (for example, a Python expression is either a number, or the addition of two expressions, which themselves are either numbers, or etc.).
+**** Graphs
+Graphs are probably the most complicated data structure that you might actually still use. A graph is a collection of nodes (usually called "vertices") plus a collection of connections ("edges") between those nodes. Sometimes these edges have additional information associated with them (a "label", "cost" or "weight").
+
+Graphs are really useful for modeling networks of things. For example, the Interstate system is a network of roads connecting cities. The World Wide Web is a network of pages with links to other pages.
+
+Graphs are also quite generic. A tree is just a graph with no cycles. Sometimes you will think you see a graph only to discover that because of some property of your data, you don't need something as complicated as a graph, but can instead get away with a list or something simpler.
+
+Graph algorithms are usually quite specialized and relatively complicated (there are entire courses on "graph theory"), so we won't discuss them here, merely to point out that they exist in case you need them.
+*** Bonus: Functions
+Although we usually think of code and data as fundamentally different, in some ways they're two sides to the same coin. Code is just data that is interpreted by a processor, and data is code which produces information.
+
+Sometimes your code needs input that is so open-ended that there isn't any way to encode it using any number of options. For example, maybe you want to write code that reads integers from a file and "does something" with them. Sometimes that "something" might be to take the biggest, sometimes it might be the smallest, sometimes it might be the one that occurs the most often, sometimes it might be the average. One way to implement this would be to encode each of these possibilities as ~enum~ s, but this limits you to supporting only the options you anticipated, and forces your code to handle all of them at once, which can add a lot of complexity to your code.
+
+Another alternative is to let the user give you code that says what to do with the integers. The natural way to do this in most languages is for them to pass a function. Your function can call the user's function and use what it returns. If you can get yourself in the right mindset, this a very powerful technique.
+
+This technique works in both directions -- rather than write a function "with a hole in it" that does a whole task, you can write several functions that contain the pieces, and let the user call them in whatever order they want. If you write code that a user calls, you've written a library; if you are calling code that a user wrote, you've written a framework.
+
+When functions are part of an interface, you're inherently limiting the use of that interface to people who can write code. For this reason, it's pretty rare that you use functions to represent anything that an end user interacts with. But functions do turn up in the interfaces that programmers use (and offer to other programmers).
+
+Functions don't go under "Basic" data structures because in a theoretical sense, they are the most complicated possible data structure. But in another sense, they're also very fundamental. There's a whole school of thought (called "functional programming") emphasizing this pattern and its use in structuring programs.
+*** See also
+- https://en.wikipedia.org/wiki/Abstract_data_type
+- https://en.wikipedia.org/wiki/Collection_(abstract_data_type)
+- https://www.youtube.com/watch?v=IcgmSRJHu_8 (This is Elm, but a great talk. Between 18m-21m or so, it becomes very Elm-specific, but the basic ideas are cross-language.)
+- https://www.slideshare.net/ScottWlaschin/domain-driven-design-with-the-f-type-system-functional-londoners-2014/93 and subsequent slides
 ** Future topics
 Local variables
 Dynamic typing
 Tuples and how they differ from lists
 Why I hate CSS
+** Linked lists
+*** Disclaimer
+This is one of those topics you tend to learn in an undergraduate computer science curriculum and use rarely afterwards. My covering it in this reading group does not constitute an endorsement of its importance or the choice to include it in a typical curriculum. We're covering it because:
+
+- For pedagogical reasons. Linked lists are a useful "jumping off point" for studying certain data structures and algorithms topics. (Although, typically we start with sorting algorithms, because those let you explore the same topics without having to talk about data structures on top of it.)
+- They're a useful "shibboleth", a concept that interviewers will use as a shorthand to verify that you have computing knowledge. It's not fair, but being able to talk knowledgeably on this specific subject can convince someone that you know a lot about computer programming more generally.
+- It happens to be a topic around which lots of Codewars problems are written.
+- Some programming languages use linked lists a lot and it's good to recognize them.
+- Linked lists happen to be an interesting application of recursion (which is probably why they are also relevant to a lot of Codewars problems).
+- Under certain somewhat rare cases, linked lists are actually useful. (Any time you want to remove stuff from the middle or the beginning.)
+*** Background
+In order to understand linked lists, it's probably best to start with some systems-level stuff about your computer's memory. Memory is like a giant rack of cubbies, like the PO boxes at a post office. Each one is small enough to hold one thing, and you can go into any of them equally easily (at least, from the back; PO boxes are usually locked). Each cubby has a number on it, so you can talk about the cubbies with your friends ("check out what's in #108") and find the one you want without having to count them one at a time. This kind of memory is called "random-access". (Some kinds of memory are sequential-access, but they're outside the scope of this discussion. Think of old-school cassette tapes. These kinds of memory are not in as much use these days.) Each PO box has a number inside it -- nothing more or less.
+
+This PO box metaphor corresponds to bytes of RAM. Each byte of RAM has an "address". Addresses start at zero and increase linearly. Each byte can only hold a number. Any byte can be accessed directly.
+
+Sometimes you'll need to store a bunch of things next to each other. One way is to try to reserve a block of PO boxes, say numbers 104-132. This gives you room for 29 items. This is basically how arrays work. If you want to get the 5th item, you can use your knowledge of the block of PO boxes to say "Well, the first one is 104, so the fifth one must be 108", and jump directly there.
+
+This is great until you need to add or remove items. Our block of PO boxes is exactly 29 items long. If we need to store more items than this, we need a bigger chunk of boxes. So when we add the 30th item, we have to find a bigger block of boxes, and (once we find it) copy everything over, one item at a time. This "resize" operation is relatively expensive, so we'd like to not do it that often.
+
+What if we have *less* than 29 things? Do we need to resize here too? Well, actually, there's a trick. If you can afford to give up a PO box, you can use the first PO box to keep track of how many things you have, and know that only that many of them are in use, and the ones after are empty. (So, for instance, if box 104 says "10", then we know that boxes 105-114 are in use.) In this way, we can have an array that "grows" a little bit, until it can't grow any more, and then it resizes. Sometimes this is called a "vector" (which is a confusing name, I know).
+
+All the PO boxes contain numbers. But the PO boxes are themselves numbered! So one PO box can store the number of another PO box (or, again, in the lingo, its "address"). The term for this is a "pointer". We'll see why this is useful in a minute.
+*** Linked list
+Instead of blocking off a giant chunk of PO boxes for your array of numbers, you can allocate just two. The first box (say, #104) will store the first number in your array (let's say it's 15). The second box (#105) will store the number of some other box (let's say it's #258), at which there are another pair of boxes, storing again another number in the array, and then another address. So you end up with something that looks like:
+
+| Box | Contents    |
+| ... |             |
+|  24 | 4           |
+|  25 | 0           |
+|  26 | [unrelated] |
+|  27 | [unrelated] |
+|  28 | 1           |
+|  29 | 38          |
+|  30 | 3           |
+|  31 | 24          |
+|  32 | [unrelated] |
+|  33 | [unrelated] |
+|  34 | [unrelated] |
+|  35 | [unrelated] |
+|  36 | [unrelated] |
+|  37 | [unrelated] |
+|  38 | 2           |
+|  39 | 30          |
+| ... |             |
+
+Our linked list starts at PO box 28-29. 28 is the first element, the number 1. 29 points to the next PO box, which is #38. 38 contains the next element of the list, 2, and 39 points to the next PO box. 30 contains the next element, 3, and #31 points to the next PO box, which is 24. 24 contains the next and final element of the list, 4, and #25 points to the next PO box. We use 0 to represent "no further elements". Our linked list contains the numbers 1, 2, 3, and 4, but spread out throughout memory.
+
+Each pair of boxes is a "node" in the linked list, and by jumping from node to node, you can retrieve all its elements. The linked list is a chain organized by "next" pointers. Note that PO boxes do not have to be next to each other or indeed even "in order" (from the perspective of its contents)!
+
+Sometimes this same list is drawn as a series of boxes, something like https://commons.wikimedia.org/wiki/File:Linked_list_data_format.jpg. Each box represents a node, which has two parts -- its actual data (in this case, the numbers 1 through 4) and the pointer to the next node.
+*** Implementation in JS
+You can think of a node in the linked list as a pair of things: some "data", and a pointer to the next node, usually called "next". In JavaScript, we can represent a node as an object, something like this:
+
+#+BEGIN_SRC javascript
+let linkedList = {
+  data: 1,
+  next: ...
+};
+#+END_SRC
+
+Some languages (such as C) include the concept of pointers directly. JavaScript isn't one of those languages, but actually almost every variable in JavaScript is secretly a pointer. So we could do this:
+
+#+BEGIN_SRC javascript
+let secondNode = {
+  data: 2,
+  next: null
+};
+
+let linkedList = {
+  data: 1,
+  next: secondNode
+};
+#+END_SRC
+
+Or more concisely:
+
+#+BEGIN_SRC javascript
+let linkedList = {
+  data: 1,
+  next: {
+    data: 2,
+    next: null
+  }
+};
+#+END_SRC
+
+When we write it like this, it stops looking like a chain of things pointing to other things, and starts to look more like one thing contained inside another thing, but rest assured that it's all pointers internally.
+
+Note that a "linked list" is just represented as its first node! We could add other stuff, but this is the essence of it.
+
+We can write the "abstract definition" of a linked list as something like (N.B. pseudocode)
+
+#+BEGIN_SRC javascript
+class Node {
+  data,     //  number, for instance
+  next      //  Node
+}
+#+END_SRC
+
+In other words, it's a recursive structure! But don't forget to account for the possibility of an "empty" linked list, which contains no elements. Pop quiz: how is that represented? You can work backwards -- a linked list with one element must be a Node, followed by an "empty" linked list.
+
+A more complete definition in a language like Haskell would be something like:
+
+#+BEGIN_SRC haskell
+data List = Node a List | Null
+#+END_SRC
+
+Because recursion and functional programming are such a natural pairing, there's a long history of linked lists in functional programming languages (even though they are often less efficient -- see below). Sometimes you'll encounter the terms "nil" to mean the end of a linked list, and a "cons cell" for the "node" (for instance, see https://stackoverflow.com/a/2689376/6107066).
+
+[In a language like C, recursive structures have to use pointers because the compiler needs to know how much space to reserve for each Node. If a Node can truly contain another Node, then that means each Node takes up as much space as a Node does, plus some bytes -- but that means Nodes are either inconsistently sized, or infinitely big. So instead we make the "next" a pointer, which is always a fixed size.]
+*** Operations
+Stop and think about these basic operations, and how you might do them in linked lists or arrays:
+- Insert an element in the middle of the sequence
+- Remove an element from the middle of the sequence
+- Add an element to the end of the sequence
+- Access the 10th element of the sequence
+
+Some of these operations are cheaper in linked lists rather than arrays. However, one hidden consequence of arrays is that they're good for what is called "locality". If you're going to operate on one element of the array, the processor may guess that you are going to operate on others, and start to preload surrounding memory, which will make subsequent operations faster. With a linked list, the processor may still guess this and preload memory, but it will contain stuff you don't care about. For this reason, in practice, arrays are often faster (which is why Python lists and JavaScript arrays are implemented internally with arrays). But this could change if the balance between processor and memory speed changes.
+
+Note also that this "optimization" came at a cost -- linked lists require twice as much memory to store the same stuff! This is because the "next" pointers take up space (whereas in an array, the "next" element is just the next box over). On the other hand, we didn't have to find a big block of contiguous memory, which can be useful sometimes.
+
+http://www.codewars.com/kata/linked-lists-push-and-buildonetwothree is a Codewars problem for implementing a specific implementation of linked lists. It links (hah!) to a bunch of other problems where you get to implement the standard sorts of operations for linked lists. https://www.codewars.com/collections/fun-with-lists is similar. https://www.codewars.com/kata/convert-a-linked-list-to-a-string is another little linked list one. https://www.codewars.com/kata/zipwith-ii-lists is a bit more advanced, requiring you to implement "zipWith", which is a common higher-order function, on linked lists (rather than just arrays).
+
+[Spoilers for the above: With this linked list structure, it's quite easy to insert or remove elements anywhere in the chain (you just have to change a couple pointers). This is very different from arrays, where you have to copy lots of elements around in order to operate in the middle (or even the beginning). However, this structure is not random access -- if I want to get to the 5th element, I have to follow 5 "next" pointers.]
+*** Variations
+If you take a data structures and algorithms class, you'll hear about differen flavors of linked list -- the kind that we describe here is a "singly linked" list, with each node pointing to the next. Other kinds include "doubly linked", which include pointers both forwards and backwards, and "circular", where the "next" pointer at the end goes back to the start. There aren't really major distinctions, but you can read about them a little bit on Wikipedia.
