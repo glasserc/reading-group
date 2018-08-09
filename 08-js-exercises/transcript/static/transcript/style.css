@@ -1,0 +1,19 @@
+body {
+  background-color: #aaaaaa;
+}
+
+.period {
+  background-color: #fff;
+}
+
+.period table.grades, .period table.grades td {
+  border: 1px solid #000;
+}
+
+.grade.pass {
+  background-color: #aaffaa;
+}
+
+.grade.fail {
+  background-color: #ffaaaa;
+}

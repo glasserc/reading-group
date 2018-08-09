@@ -1,0 +1,48 @@
+{% load static %}
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="{% static 'transcript/style.css' %}"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script type="text/javascript" src="{% static 'transcript/uploaded.js' %}"></script>
+  </head>
+  <body id="transcript-{{ transcript.id }}" class="student-transcript" data-student-id="{{ student.id }}">
+    <h1>Transcript for {{ student.name }}</h1>
+    <div class="overview">
+      <div class="date">As of {{ now }}</div>
+      <div class="graduation">Graduated in: {{ student.graduation|date:"Y-m-d" }}</div>
+      <div class="gpa">Overall GPA: {{ transcript.gpa }}</div>
+    </div>
+    {% for period in transcript.period_set.all %}
+    <div class="period" id="period-{{ period.year }}-{{ period.month }}">
+      <h2>{{ period.title }}</h2>
+      <table class="grades">
+        <thead>
+          <th class="code">Code</th>
+          <th class="course-name">Course</th>
+          <th class="professor">Professor</th>
+          <th class="credits">Credits</th>
+          <th class="grade">Grade</td>
+        </thead>
+        <tbody>
+          {% for course in period.course_set.all %}
+          <tr class="course">
+            <td class="code">{{ course.code }}</td>
+            <td class="course-name">{{ course.name }}</td>
+            <td class="professor">{{ course.professor }}</td>
+            <td class="credits">{{ course.credits }}</td>
+            <td class="grade {% if course.passing_grade %}pass{% else %}fail{% endif %}">{{ course.grade }}</td>
+          </tr>
+          {% endfor %}
+          <tr class="average">
+            <td></td>
+            <td class="course-name">Average</td>
+            <td></td>
+            <td></td>
+            <td class="grade {% if period.passing_average %}pass{% else %}fail{% endif %}">{{ period.average }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {% endfor %}
+  </body>
+</html>
