@@ -1745,6 +1745,57 @@ Functions don't go under "Basic" data structures because in a theoretical sense,
 - https://en.wikipedia.org/wiki/Collection_(abstract_data_type)
 - https://www.youtube.com/watch?v=IcgmSRJHu_8 (This is Elm, but a great talk. Between 18m-21m or so, it becomes very Elm-specific, but the basic ideas are cross-language.)
 - https://www.slideshare.net/ScottWlaschin/domain-driven-design-with-the-f-type-system-functional-londoners-2014/93 and subsequent slides
+** Asynchrony in JS
+We use a lot of anonymous functions in JavaScript, but there's no real reason they *need* to be anonymous. For example, let's say I have the following (synchronous) code:
+
+let flour = getEggs();
+let water = getWater();
+let yeast = getYeast();
+let dough = mix(flour, water, yeast);
+let risenDough = allowRise(4, dough);
+let bread = bake(risenDough, 425);
+
+Let's say getEggs, getWater, and all the rest are asynchronous. They can't return their results immediately, but have to go get them for a while first. So they need to know what to do when they have the results. How do we express "a thing to do"? As code. How do we pass code as an argument? Wrap it in a function. So maybe we write something like this:
+
+function bakeRisenDough(risenDough) {
+  bake(risenDough, 425);
+}
+
+function allowRiseAndThenBakeDough(dough) {
+  allowRise(4, dough, bakeRisenDough);
+}
+
+function getWaterAndYeastAndMixAndAllowRiseAndThenBakeDough(flour) {
+  function getYeastAndMixAndAllowRiseAndThenBakeDough(water) {
+    function mixAndAllowRiseAndThenBakeDough(yeast) {
+      mix(flour, water, yeast, allowRiseAndThenBakeDough);
+    }
+    getYeast(mixAndAllowRiseAndThenBakeDough);
+  }
+  getWater(getYeastAndMixAndAllowRiseAndThenBakeDough);
+}
+
+getFlour(getWaterAndYeastAndMixAndAllowRiseAndThenBakeDough);
+
+Kind of a drag, isn't it? We have all these meaningless functions that only exist to string together other meaningless functions. When you have functions like this, you might consider whether the names of the functions are really adding that much. If they aren't, then maybe we can do without them. Since each function is only used once, we might not define them inline instead:
+
+getFlour(function(flour) {
+  getWater(function(water) {
+    getYeast(function(yeast) {
+      mix(flour, water, yeast, function(dough) {
+        allowRise(4, dough, function(risenDough) {
+          bake(risenDough, 425);
+        });
+      });
+    });
+  });
+});
+
+This kind of sucks too, but this is the best we've got with the tools we've seen so far. This is how asynchronous programming in JS was done for a long time. Given these tools, I'd probably write a mix of these two things -- maybe extract allowRiseAndBakeDough, but leave the rest the same.
+
+This isn't the only approach to expressing asynchrony in computer languages. In some languages, there's a concept of "threads", which sort of allow the possibility of continuing to write straightforward synchronous-looking code, but with execution happening in multiple spots at once. The problem is that different threads can interact in many different ways, and a programmer may not always have anticipated all of them.
+
+JavaScript decided not to include threads. The next mechanism they introduced for asynchronous programming was called promises, and they're a little nicer than this kind of "callback hell". We'll talk about them a bit more next time.
 ** Future topics
 Local variables
 Dynamic typing
