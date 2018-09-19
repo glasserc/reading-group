@@ -1796,11 +1796,651 @@ This kind of sucks too, but this is the best we've got with the tools we've seen
 This isn't the only approach to expressing asynchrony in computer languages. In some languages, there's a concept of "threads", which sort of allow the possibility of continuing to write straightforward synchronous-looking code, but with execution happening in multiple spots at once. The problem is that different threads can interact in many different ways, and a programmer may not always have anticipated all of them.
 
 JavaScript decided not to include threads. The next mechanism they introduced for asynchronous programming was called promises, and they're a little nicer than this kind of "callback hell". We'll talk about them a bit more next time.
+** Low-level code refactors
+To refactor code means to change its structure while preserving its behavior. You refactor code when it works but it doesn't support what you want to do. This might happen after you've bashed out some code for the first time, or when you come back to it after learning more about the project the code belongs to. Some refactors can be quite involved and intense where responsibilities move from one section of code to another, or things are separated out from other things. Make sure you have a good test suite before you embark on these!
+
+There are also a bunch of simple "micro-refactors" which are relatively obvious. To get you to start thinking in these terms, here is a list with a few. I've named each one, but I'm not really clear on which names might make sense to other people and which might not. (However, the term "extract" does seem to be relatively well-understood.) I'm hoping that once you start to see them, you'll see them everywhere.
+
+The ones in these list mostly focus on small code-level changes. Maybe later we can talk about those more involved refactors that talk about moving functions from one place to another, changing the relationship between two pieces of code, changing the arguments given to functions, etc.
+*** Extract constant
+Before:
+
+#+BEGIN_SRC javascript
+let x = 5 * 8;
+console.log("An octagon with radius 5 has perimeter", x);
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+const RADIUS = 5;
+const SIDES = 8;
+let x = RADIUS * SIDES;
+console.log("An octagon with radius", RADIUS, "has perimeter", x);
+#+END_SRC
+
+You almost always want to name "magic numbers" like this!
+*** Extract constant/variable as parameter
+Before:
+
+#+BEGIN_SRC javascript
+function greetUser() {
+  const username = "George";
+  console.log("Hello, " + user);
+}
+
+greetUser();
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+function greetUser(username) {
+  console.log("Hello, " + user);
+}
+
+const username = "George";
+greetUser(username);
+#+END_SRC
+
+This can make a function more flexible, analogously to extracting the constant/variable itself.
+
+Sometimes it's important to move the source of information into/out of a function based on what part of the codebase should be "responsible" for it. This particular transformation moves the responsibility for the username outside of the function (~username~ is now provided to the function), and reversing the transformation moves the responsibility back into the function. (This is still true even if, say, ~greetUser~ calls a function to get ~username~.)
+*** Extract expression as variable
+Before:
+
+#+BEGIN_SRC javascript
+const LENGTH = 10;
+const WIDTH = 20;
+console.log("The area of the rectangle is", LENGTH * WIDTH);
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+const LENGTH = 10;
+const WIDTH = 20;
+const AREA = LENGTH * WIDTH;
+console.log("The area of the rectangle is", AREA);
+#+END_SRC
+
+Any expression you repeat more than once should probably be a function or a variable. Some compilers can notice when you re-use an expression and only compute it once -- this is called common subexpression elimination, or CSE.
+
+If something is only used once, it can sometimes be valuable to do the reverse of this refactor, i.e. put the expression in directly and get rid of the variable.
+
+Other examples:
+
+Before:
+
+#+BEGIN_SRC javascript
+console.log("The area of the rectangle is", 15 * 2);
+console.log("The area of the rectangle is", 3 * 9);
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+function logRectangle(length, width) {
+  console.log("The area of the rectangle is", length * width);
+}
+logRectangle(15, 2);
+logRectangle(3, 9);
+#+END_SRC
+
+Normally, a repeated expression produces the same value, which means it can be stored in a variable. However, in the general case, you may have repeated code. Code can't be extracted as a variable, but it can be extracted as a function.
+
+Before:
+
+#+BEGIN_SRC javascript
+button1.addEventHandler('click', function() {
+  console.log("Click received:", this.value);
+});
+button2.addEventHandler('click', function() {
+  console.log("Click received:", this.value);
+});
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+const myButtonHandler = function() {
+  console.log("Click received:", this.value);
+}
+button1.addEventHandler('click', myButtonHandler);
+button2.addEventHandler('click', myButtonHandler);
+#+END_SRC
+
+Drawn from a real-life situation! Here is an interesting example where although it "feels" like we are extracting code, in actual fact we can get away with extracting a "variable", which is just a function.
+*** Rename variable or function
+Before:
+
+#+BEGIN_SRC javascript
+let controller = {};
+controller.ethan = "trustno1";
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+let passwords = {};
+passwords.ethan = "trustno1";
+#+END_SRC
+
+Naming things well is very hard. It can be very helpful to change names when you think of a better one.
+
+Changing a local variable's name should always be safe. (By definition, if it's local, it can't be seen outside the function.) Renaming a global variable, a member variable, or a function means renaming it in every place it's being used. In more dynamic languages (like JavaScript!) it may not be possible to know definitively if something is being used or not (because things can be looked up dynamically at runtime), so you may have to test to make sure everything still works OK.
+*** Several Boolean refactors
+These are usually most useful when targeting the condition of an ~if~ statement or a loop, but can apply to any expression that manipulates Booleans:
+
+- Negating a negation cancels out. So, ~!(!x)~ is the same as ~x~ -- if ~x~ is truthy, then ~!(!x)~ will have the same truthiness value as x. N.B. However, in JS, sometimes ~!!x~ is used as a shorthand way to convert something to a Boolean.
+
+- De Morgan's laws: ~!(x && y)~ is ~!x || !y~, and ~!(x || y)~ is ~!x && !y~.
+
+- ~x && true~ is the same as ~x~. ~x && false~ is the same as ~false~.
+
+- ~x || false~ is the same as ~x~. ~x || true~ is the same as ~true~.
+
+- More at https://en.wikipedia.org/wiki/Boolean_algebra.
+
+- Also keep in mind the opposites of common comparisons: ~!(x > y)~ is the same as ~x <= y~, and vice versa.
+
+Before:
+
+#+BEGIN_SRC javascript
+let userIsNew = ....;
+let emailIsValid = ....;
+if (!(emailIsValid || !userIsNew)) {
+  console.log("Can't register as new user with invalid email");
+} else {
+  // User is old so email doesn't have to be valid
+}
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+if (!emailIsValid && userIsNew) {
+  console.log("Can't register as new user with invalid email");
+} else {
+  // User is old so email doesn't have to be valid
+}
+#+END_SRC
+
+Sometimes it also helps to reframe your variables -- instead of having ~let emailIsValid = whatever;~, consider doing ~let emailIsInvalid = !whatever;~. Or the other way around.
+
+*** Flipping if/then
+Before:
+
+#+BEGIN_SRC javascript
+if (condition) {
+  // Do something
+} else {
+  // Do something else
+}
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+if (!condition) {
+  // Do something else
+} else {
+  // Do something
+}
+#+END_SRC
+
+This can be handy in combination with the Boolean refactoring laws above. Or sometimes you find yourself with something like:
+
+#+BEGIN_SRC javascript
+if (condition) {
+} else {
+  console.log("OK, this is a thing we want to handle somehow");
+}
+#+END_SRC
+
+If the ~then~ part is completely empty, you don't actually care about the condition -- you're checking for the inverse of the condition, and you can switch it around into:
+
+#+BEGIN_SRC javascript
+if (!condition) {
+  console.log("OK, this is a thing we want to handle somehow");
+} else {
+}
+#+END_SRC
+
+And then drop the ~else~ entirely (as with other refactors, below):
+
+#+BEGIN_SRC javascript
+if (!condition) {
+  console.log("OK, this is a thing we want to handle somehow");
+}
+#+END_SRC
+
+N.B. Some languages (most notably Perl) offer some interesting control flow statements, such as ~unless (condition)~, which is the same as ~if (! condition)~, and ~until (condition)~, which is the same as ~while (! condition)~.
+*** Collapse if
+Before:
+
+#+BEGIN_SRC javascript
+f(1);
+if (condition) {
+}
+f(2);
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+f(1);
+f(2);
+#+END_SRC
+
+An empty ~if~ statement can simply be left out!
+
+Similarly:
+
+Before:
+
+#+BEGIN_SRC javascript
+f(1);
+if (condition) {
+  f(2);
+} else {
+}
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+f(1);
+if (condition) {
+  f(2);
+}
+#+END_SRC
+
+An empty ~else~ block can also just be dropped.
+*** Combine branches
+Before:
+
+#+BEGIN_SRC javascript
+if (condition) {
+  f();
+  // Other stuff..
+} else {
+  f();
+  // More stuff..
+}
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+f();
+if (condition) {
+  // Other stuff..
+} else {
+  // More stuff..
+}
+#+END_SRC
+
+You can also pop stuff out at the end of the ~then~ / ~else~:
+
+#+BEGIN_SRC javascript
+if (condition) {
+  // Other stuff..
+  f();
+} else {
+  // More stuff..
+  f();
+}
+#+END_SRC
+
+Becomes:
+
+#+BEGIN_SRC javascript
+if (condition) {
+  // Other stuff..
+} else {
+  // More stuff..
+}
+f();
+#+END_SRC
+
+Using this sometimes lets you shrink either the ~then~ or the ~else~ case down to nothing, at which point you can drop it (as above).
+
+Sometimes it can be helpful to reverse this refactor -- split something into two different branches to make them behave slightly differently, or do them in different orders.
+*** Unconditional conditions
+Before:
+
+#+BEGIN_SRC javascript
+if (true) {
+  // True then
+} else {
+  // True else
+}
+
+if (false) {
+  // False then
+} else {
+  // False else
+}
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+// True then
+// False else
+#+END_SRC
+
+N.B. Sometimes you'll see something like this:
+
+#+BEGIN_SRC javascript
+const DEBUG = false;
+if (DEBUG) {
+  // Some stuff
+}
+#+END_SRC
+
+This is set up so that if you want more debugging output, you can just change the DEBUG constant at the top of the file. In this case, don't go to the trouble of taking out all the ~if~ blocks -- usually a compiler or something like that will do it for you, and/or it won't hurt anything to leave them in.
+*** Early exit
+This is kind of a combination of the "flipping if/then" and "collapse if" refactors (above), but in the context of a function.
+
+Before:
+
+#+BEGIN_SRC javascript
+function doSomething(c) {
+  if (condition) {
+    // Do stuff
+    // Sometimes this is really long stuff
+    // and it takes up lines and lines
+    // to the point where you don't even
+    // remember what condition you were in
+    // or if it's still relevant...
+    // Oh OK I guess we're done
+  }
+}
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+function doSomething(c) {
+  if (!condition) {
+    return;
+  }
+
+  // Do stuff
+  // Sometimes this is really long stuff
+  // and it takes up lines and lines
+  // to the point where you don't even
+  // remember what condition you were in
+  // or if it's still relevant...
+  // Oh OK I guess we're done
+}
+#+END_SRC
+
+Lots of times you'll have some kind of condition which you need to check. If the condition isn't true, your whole function (or a large fraction of it) doesn't make sense. I like to return early in these kinds of cases. I find that the code tends to read clearer as "here is an invalid case; abort when this happens" instead of "here's the only valid case". I sometimes lose track of the conditional, so when we get to the end of the function I'm like "wait, two closing brackets, why?? what were we in the middle of? do I need to handle something else now that the if statement is done?" Also pulling the body outside of the if statement lets you save a layer of indentation, which I usually prefer.
+
+N.B. Some grognards insist that functions should only have one exit point, so prefer the "before" form. This may be a leftover habit from C, where you need to explicitly clean up anything you allocated as part of your function. See [[http://wiki.c2.com/?SingleFunctionExitPoint][SingleFunctionExitPoint]] on Wiki Wiki Web. As with most stylistic quirks you encounter on the job, it's best to "do what the Romans do", even if you don't necessarily agree with it.
+*** Unrolling a loop
+Before:
+
+#+BEGIN_SRC javascript
+for (let i = 0; i < n; i++) {
+  f(i);
+}
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+f(0);
+f(1);
+f(2);
+f(3);
+f(4);
+// ...
+f(n);
+#+END_SRC
+
+You probably won't actually see this in your day-to-day work. It sometimes comes up when optimizing code that has to be very very fast. It has come up enough that there's a name for it: https://en.wikipedia.org/wiki/Loop_unrolling . Much more likely is that you'll be doing the reverse of this transformation.
+*** Extending a loop
+Before:
+
+#+BEGIN_SRC javascript
+for (let i = 0; i < n; i++) {
+  f(i);
+}
+f(n);
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+for (let i = 0; i < n + 1; i++) {
+  f(i);
+}
+#+END_SRC
+
+If you see some code that looks similar to code inside a loop, you can sometimes incorporate it into the loop itself. The reverse can also be useful sometimes if you need to make the bounds line up for whatever reason.
+
+Variation (extend at the beginning):
+
+Before:
+
+#+BEGIN_SRC javascript
+f(-1);
+for (let i = 0; i < n; i++) {
+  f(i);
+}
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+for (let i = -1; i < n; i++) {
+  f(i);
+}
+#+END_SRC
+
+An example from a real linked list problem:
+
+Before:
+
+#+BEGIN_SRC javascript
+f(head);
+let p = head.next;
+while (p !== null) {
+  f(p);
+  p = p.next;
+}
+#+END_SRC
+
+This turned out to cause a bug because sometimes ~head~ was null (so ~head.next~ was crashing).
+
+After:
+
+#+BEGIN_SRC javascript
+let p = head;
+while (p !== null) {
+  f(p);
+  p = p.next;
+}
+#+END_SRC
+*** Anti-patterns
+Don't do these -- people online will make fun of you.
+
+The "[[http://thedailywtf.com/articles/Switched_on_Loops][for-case loop]]" a.k.a. the "[[https://en.wikipedia.org/wiki/Loop-switch_sequence][loop-switch sequence]]":
+
+#+BEGIN_SRC javascript
+for (let i = 0; i < 10; i++) {
+  if (i == 0) {
+    // Do something interesting for 0
+  } else if (i == 1) {
+    // Use 1 to do something interesting
+  } else if (i == 2) {
+    // .. and so on ..
+  } else {
+    // Do the 9th interesting thing
+  }
+}
+#+END_SRC
+
+The "loop" here isn't actually repeating any action. This is actually a sequential process that's been forced into a strange looping construct. Instead do:
+
+#+BEGIN_SRC javascript
+// Do something interesting for 0
+// Use 1 to do something interesting
+// .. and so on ..
+// Do the 9th interesting thing
+#+END_SRC
+
+There's no crime in writing out a sequence of operations if they really are sequential and have nothing to do with each other.
+
+If at first you don't succeed, try, try, and then stop:
+
+#+BEGIN_SRC javascript
+let success = doSomething();
+if (! success) {
+  success = doSomething();
+  if (! success) {
+    success = doSomething();
+  }
+}
+#+END_SRC
+
+Obviously this could conceptually go on forever. But there's no real reason these things need to be nested like this -- this is actually a looping process that's been written out as a strange nested if-then.
+
+#+BEGIN_SRC javascript
+let success = false;
+while (! success) {
+  success = doSomething();
+}
+#+END_SRC
+
+N.B. From a theoretical perspective, there's only ever two ways failure can be handled: by trying forever, or by aborting. Be sure you are OK with whichever one you choose. (There are lots of other options that boil down into one of the two options. For example, "Try five times, then give up" just means "Try and on failure give up, except that 'failure' is defined as a sequence of five specific failures.")
+*** Exercises for the reader
+Try to clean up this messy function. It's meant to be part of a banking system. You can certainly clean up the first if-then-else statement by straightening out the condition and merging common stuff between the two branches. For the second if statement, use an early-exit to clarify. Consider renaming the parameters (which I chose to be deliberately obtuse).
+
+#+BEGIN_SRC javascript
+let balance = 1000;
+function cashCashCash(x, t) {
+  if (!(x > balance || !t)) {
+    console.log("Sending", x, "to", t);
+    balance -= x;
+  } else {
+    balance -= x;
+  }
+  if (balance < 0) {
+    console.log("Currently in debt", -balance);
+    if (transferDest) {
+      console.log("Maybe you shouldn't have sent that money to", t);
+    }
+    sendEmail();
+  }
+}
+#+END_SRC
+
+Try to condense the two similar-looking code blocks below into a single function being called twice. Then, try to clean up the conditional inside the ~for~ loop (it isn't really needed).
+
+#+BEGIN_SRC javascript
+console.log("Calculating results for George");
+for (let i = 0; i < 10; i++) {
+  if (i % 2 == 0) {
+    f(i, "George");
+  } else {
+    g(i);
+  }
+}
+
+console.log("Calculating results for Henry");
+for (let i = 0; i < 10; i++) {
+  if (i % 2 == 0) {
+    f(i, "Henry");
+  } else {
+    g(i);
+  }
+}
+#+END_SRC
 ** Future topics
 Local variables
 Dynamic typing
 Tuples and how they differ from lists
 Why I hate CSS
+** Future refactors
+*** "Switch" into dynamic dispatch
+Before:
+
+#+BEGIN_SRC javascript
+function doSomethingForTypeOne() {
+  // ...
+}
+
+function doSomethingForTypeTwo() {
+  // ...
+}
+
+if (obj.type == 1) {
+  doSomethingForTypeOne();
+} else if (obj.type == 2) {
+  doSomethingForTypeTwo();
+}
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+typeOne.prototype.doSomething = function() {
+  // ...
+}
+
+typeTwo.prototype.doSomething = function() {
+  // ...
+}
+
+obj.doSomething();
+#+END_SRC
+
+This is a classic object-oriented refactor -- see e.g. [[https://refactoring.guru/replace-conditional-with-polymorphism][replace conditional with polymorphism]]. There's also another style where you look up the functions yourself:
+
+#+BEGIN_SRC javascript
+const doSomethingByType = {
+  1: doSomethingForTypeOne,
+  2: doSomethingForTypeTwo
+};
+
+doSomethingByType[obj.type]();
+#+END_SRC
+
+The object-oriented version of this is sort of hiding the hash table in the dynamic dispatch.
+*** "before"/"end" into wrapper function
+This shades into "design pattern" territory.
+
+Before:
+
+#+BEGIN_SRC javascript
+setUp();
+doSomething1();
+cleanUp();
+
+setUp();
+doSomething2();
+cleanUp();
+#+END_SRC
+
+After:
+
+#+BEGIN_SRC javascript
+function withResource(f) {
+  setUp();
+  f();
+  cleanUp();
+}
+
+withResource(doSomething1);
+withResource(doSomething2);
+#+END_SRC
+
+If you have some kind of "resource" that needs to be cleaned up, or some kind of logic that absolutely needs to be run "after" certain things, and you're afraid people will forget it, you can write a wrapper function to enforce that it gets called. This is most powerful when the result of the set up is somehow required for the ~doSomething~ functions. Some languages have other mechanisms for enforcing cleanup that don't require closures like this: in C++, there's a technique called [[https://stackoverflow.com/questions/2321511/what-is-meant-by-resource-acquisition-is-initialization-raii][RAII]] ([[http://wiki.c2.com/?ResourceAcquisitionIsInitialization][RAII on Wiki Wiki Web]]) and in Python there's [[https://en.wikibooks.org/wiki/Python_Programming/Context_Managers][context managers]].
 ** Linked lists
 *** Disclaimer
 This is one of those topics you tend to learn in an undergraduate computer science curriculum and use rarely afterwards. My covering it in this reading group does not constitute an endorsement of its importance or the choice to include it in a typical curriculum. We're covering it because:
