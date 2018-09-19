@@ -2567,3 +2567,438 @@ http://www.codewars.com/kata/linked-lists-push-and-buildonetwothree is a Codewar
 [Spoilers for the above: With this linked list structure, it's quite easy to insert or remove elements anywhere in the chain (you just have to change a couple pointers). This is very different from arrays, where you have to copy lots of elements around in order to operate in the middle (or even the beginning). However, this structure is not random access -- if I want to get to the 5th element, I have to follow 5 "next" pointers.]
 *** Variations
 If you take a data structures and algorithms class, you'll hear about differen flavors of linked list -- the kind that we describe here is a "singly linked" list, with each node pointing to the next. Other kinds include "doubly linked", which include pointers both forwards and backwards, and "circular", where the "next" pointer at the end goes back to the start. There aren't really major distinctions, but you can read about them a little bit on Wikipedia.
+** Templates
+*** Motivating example
+Someone designed our website. They hand us HTML for two pages -- a "landing" page that looks like this:
+
+#+BEGIN_SRC html
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+  </head>
+  <body>
+    <h1>Welcome to the jungle!</h1>
+    <p>
+      Welcome to the jungle.com design refresh. We hope you like it!
+    </p>
+    <footer>Copyright 2018 The Jungle.com.</footer>
+  </body>
+</html>
+#+END_SRC
+
+And a page for individual blog articles which looks like this:
+
+#+BEGIN_SRC html
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+  </head>
+  <body>
+    <header>
+      You are here:
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li>Some blog article title</li>
+      </ul>
+    </header>
+    <h3>Some blog article title</h3>
+    <h4>by Fred Bloggs on August 12th, 2018</h4>
+    <p>
+      Blog content goes here. This is an article about some topic.
+    </p>
+    <p>
+      Blog articles can have a lot of content. Here's more content.
+    </p>
+    <footer>Copyright 2018 The Jungle.com.</footer>
+  </body>
+</html>
+#+END_SRC
+
+Our job is to write a server program that renders both types of HTML depending on what page it is.
+*** Raw code
+Let's try just writing code that assembles HTML out of strings.
+
+#+BEGIN_SRC javascript
+function renderMainPage() {
+  let output = [];
+  output.push("<html>");
+  output.push("  <head>");
+  output.push("    <link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\" />");
+  output.push("  </head>");
+  output.push("  <body>");
+  output.push("    <h1>Welcome to the jungle!</h1>");
+  output.push("    <p>");
+  output.push("      Welcome to the jungle.com design refresh. We hope you like it!");
+  output.push("    </p>");
+  output.push("    <footer>Copyright 2018 The Jungle.com.</footer>");
+  output.push("  </body>");
+  output.push("</html>");
+  return output.join("\n");
+}
+
+function renderBlogPost(blogPost) {
+  let output = [];
+  output.push("<html>");
+  output.push("  <head>");
+  output.push("    <link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\" />");
+  output.push("  </head>");
+  output.push("  <body>");
+  output.push("    <header>");
+  output.push("      You are here:");
+  output.push("      <ul>");
+  output.push("        <li><a href=\"/\">Home</a></li>");
+  output.push("        <li>" + blogPost.title + "</li>");
+  output.push("      </ul>");
+  output.push("    </header>");
+  output.push("    <h3>" + blogPost.title + "</h3>");
+  output.push("    <h4>by " + blogPost.author.name + " on " + blogPost.publishDate + "</h4>");
+  let paragraphs = blogPost.content.split("\n\n");
+  for (let i = 0; i < paragraphs.length; i++) {
+    output.push("<p>" + paragraphs[i] + "</p>");
+  }
+  output.push("    <footer>Copyright 2018 The Jungle.com.</footer>");
+  output.push("  </body>");
+  output.push("</html>");
+  return output.join("\n");
+}
+#+END_SRC
+
+Ugh! This is super gross. We had to mix HTML and JS. The HTML is encoded as JS strings which makes it almost unreadable. Not only that, there's a JS indentation which can be different from the HTML indentation so again it's really hard to match up what's supposed to close what. Front-end developers can often do some great stuff if they have access to the HTML and CSS, but here they can only touch "their" code by going through "our" code. This makes it much harder for them to do their work. What a disaster!
+*** JSP/ASP/PHP
+So instead let's define a kind of "template language". It will look mostly like HTML and it will have certain special non-HTML commands that we can use to embed code. In the late 90s, Microsoft came out with Active Server Pages, and in Java there was something called Java Server Pages, and around the same time PHP was starting to get popular, and it uses a similar style (although in PHP, *everything* is HTML, whereas in JSP-based applications, most things are Java, and JSP files are the exceptions).
+
+Converting the "blog post" function above, we'd get something like this:
+
+#+BEGIN_SRC jsp
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+  </head>
+  <body>
+    <header>
+      You are here:
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><%= blogPost.title %></li>
+      </ul>
+    </header>
+    <h3><%= blogPost.title %></h3>
+    <h4>by <%= blogPost.author.name %> on <%= blogPost.publishDate %></h4>
+    <% let paragraphs = blogPost.content.split("\n\n"); %>
+    <% for (let i = 0; i < paragraphs.length; i++) { %>
+    <p>
+      <%= paragraphs[i] %>
+    </p>
+    <% } %>
+    <footer>Copyright 2018 The Jungle.com.</footer>
+  </body>
+</html>
+#+END_SRC
+
+OK, this looks a little better. A web designer who is only familiar with HTML could probably work with this. There are some variables and stuff that would only get filled in later, but they could probably just work around that. It looks much more like HTML with a little bit of code sprinkled in.
+
+How does it work? We can translate this kind of JSP into the previous function just by copying everything that isn't "special" into the function, and storing it in an output variable, like we did above. There are only two "special" constructs: ~<% foo %>~, which represents code that we put into the function directly, and ~<%= foo %>~, which represents an expression whose output we will concatenate into our function's rendered output.
+
+Note that the JSP refers to a variable called ~blogPost~, but (unlike the function) there's no explicit "argument" to the JSP. Instead, templates like this have what's called a /context/, a set of variables which are made available to the template.
+
+In the early '00s there were a proliferation of different template languages. Some are tied very tightly to rendering HTML, for example https://en.wikipedia.org/wiki/Template_Attribute_Language. Most aren't really used any more.
+*** DRY
+Unfortunately, we have a bunch of repetition in these pages, and (as you know) repetition hurts our souls. For example, on January 1st, we have to change the copyright date in the footer, which means we have to change every single JSP. So maybe we need to figure out a way to start sharing some of this code.
+
+Let's imagine we had a function called ~render()~. This function could take the name of a template and return the rendered output of the template. In other words, it's a way to include one template in another template. Then we could define a ~header.jsp~ file like this:
+
+#+BEGIN_SRC jsp
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+  </head>
+  <body>
+#+END_SRC
+
+And a ~footer.jsp~:
+
+#+BEGIN_SRC jsp
+    <footer>Copyright 2018 The Jungle.com.</footer>
+  </body>
+</html>
+#+END_SRC
+
+Now we can share those pieces in other templates. For example, our ~blogpost.jsp~ file might now look something like this:
+
+#+BEGIN_SRC jsp
+<%= render("header.jsp") %>
+    <header>
+      You are here:
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><%= blogPost.title %></li>
+      </ul>
+    </header>
+    <h3><%= blogPost.title %></h3>
+    <h4>by <%= blogPost.author.name %> on <%= blogPost.publishDate %></h4>
+    <% let paragraphs = blogPost.content.split("\n\n"); %>
+    <% for (let i = 0; i < paragraphs.length; i++) { %>
+    <p>
+      <%= paragraphs[i] %>
+    </p>
+    <% } %>
+<%= render("footer.jsp") %>
+#+END_SRC
+
+Now when we edit the footer, it takes effect everywhere, because the footer is actually shared.
+
+Exercise: convert the home page to a JSP that uses the header and footer in the same way.
+
+There are some problems with the above approach. For example, you could forget to include the footer and everything will "seem" fine. (You won't have the closing ~</body>~ and ~</html>~, but most browsers will automatically figure out that these tags should be closed, and will insert closing tags for you.) This means you have to check every page to remember to include the footer.
+
+What about page titles? The ~<title>~ element has to go into the ~<head>~, which is defined in ~header.jsp~. One option might be to add the "context" to the ~render~ call:
+
+#+BEGIN_SRC jsp
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+    <title><%= title || "Home page" %>
+  </head>
+  <body>
+#+END_SRC
+
+#+BEGIN_SRC jsp
+<%= render("header.jsp", {title: "Blog: " + blogPost.title}) %>
+... rest of the page ...
+#+END_SRC
+
+OK, but what about other stuff that we might want to add to the ~<head>~ element, like other CSS files or ~<meta>~ tags? Maybe we can add another "extra code" variable to the header:
+
+#+BEGIN_SRC jsp
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+    <title><%= title || "Home page" %>
+    <%= extraCode || "" %>
+  </head>
+  <body>
+#+END_SRC
+
+#+BEGIN_SRC jsp
+<%= render("header.jsp", {
+      title: "Blog: " + blogPost.title,
+      extraCode: "<link rel=\"stylesheet\" type=\"text/css\" href=\"blog.css\">",
+    }) %>
+... rest of the page ...
+#+END_SRC
+
+This is starting to get us back to where we started, with HTML embedded in code, only now it's almost worse because we have HTML embedded in code embedded in HTML! Yuck.
+*** Django style
+Django templates were invented for the Django web framework and seem to have influenced lots of other systems (such as Twig and Nunjucks; Mustache and Handlebars also look a little similar but are apparently inspired by another system called ctemplates which was invented at Google). The ideas here were that we want to minimize the amount of actual code that happens in the template -- it should be (as much as possible) just pure layout and design, with the bare minimum of code permitted to allow the HTML to be written correctly. Django templates also introduced a new feature, called template inheritance, which helps us with the kinds of problems we were facing before of extensibility.
+
+The syntax of Django templates is a little different from other languages. Instead of ~<%= expression %>~, you write ~{{ expression }}~. Also, you can have filters, which are sort of like functions that the template language provides: ~{{ expression|filter }}~. Instead of ~<% code; %>~, you write ~{% code %}~, but be careful because Django templates don't let you write arbitrary code -- only certain commands are allowed. So a simple definition of our blog post template might look like this:
+
+#+BEGIN_SRC django-html
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+  </head>
+  <body>
+    <header>
+      You are here:
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li>{{ blogPost.title }}</li>
+      </ul>
+    </header>
+    <h3>{{ blogPost.title }}</h3>
+    <h4>by {{ blogPost.author.name }} on {{ blogPost.publishDate }}</h4>
+    {% for paragraph in blogPost.content.split("\n\n") %}
+    <p>
+      {{ paragraph }}
+    </p>
+    {% endfor %}
+    <footer>Copyright 2018 The Jungle.com.</footer>
+  </body>
+</html>
+#+END_SRC
+
+Seems straightforward enough. What about the re-use problem (sharing the header and footer), like we saw before? For that, we have template inheritance. Template inheritance works a little bit like object-oriented programming does. First, someone defines a "layout", which is like a parent class. For our case, we might write a ~layout.dhtml~ file that looks like this:
+
+#+NAME: layout.dhtml
+#+BEGIN_SRC django-html
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+  </head>
+  <body>
+    {% block body %}
+      This is the default content.
+    {% endblock %}
+    <footer>Copyright 2018 The Jungle.com.</footer>
+  </body>
+</html>
+#+END_SRC
+
+We see that this is a "complete" Django template -- nothing is missing, nothing indicates in any way that this is a "parent" template. We can even render this template, and if we do, the ~{% block %}~ will render its contents, so we'll get:
+
+#+BEGIN_SRC django-html
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+  </head>
+  <body>
+    This is the default content.
+    <footer>Copyright 2018 The Jungle.com.</footer>
+  </body>
+</html>
+#+END_SRC
+
+We can think of this "layout" template as turning into object-oriented like this:
+
+#+BEGIN_SRC javascript
+function Layout() {
+}
+Layout.prototype.render = function() {
+  let output = [];
+  output.push("<html>");
+  output.push("  <head>");
+  output.push("    <link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\" />");
+  output.push("  </head>");
+  output.push("  <body>");
+  output.push(this.renderBlockBody());
+  output.push("    <footer>Copyright 2018 The Jungle.com.</footer>");
+  output.push("  </body>");
+  output.push("</html>");
+  return output.join("\n");
+};
+Layout.prototype.renderBlockBody = function() {
+  let output = [];
+  output.push("This is the default content.");
+  return output.join("\n");
+};
+#+END_SRC
+
+In other words, each block becomes a method, but also simultaneously becomes a place where the method is called. This makes the block a "hook", something that we can attach to if we want to change the behavior of the template.
+
+So how do we hook into it? We ~extend~ the template. We might write a ~homepage.dhtml~ file that looks like this:
+
+#+NAME: homepage.dhtml
+#+BEGIN_SRC django-html
+{% extends "layout.dhtml" %}
+
+{% block body %}
+    <h1>Welcome to the jungle!</h1>
+    <p>
+      Welcome to the jungle.com design refresh. We hope you like it!
+    </p>
+{% endblock %}
+#+END_SRC
+
+This gets translated into something like this:
+
+#+BEGIN_SRC javascript
+function HomePage() {
+}
+HomePage.prototype.renderBlockBody = function() {
+  let output = [];
+  output.push("<h1>Welcome to the jungle!</h1>");
+  output.push("<p>");
+  output.push("  Welcome to the jungle.com design refresh. We hope you like it!");
+  output.push("</p>");
+  return output.join("\n");
+};
+#+END_SRC
+
+So now, when we render the home page, we start by rendering the parent template (in this case ~layout.dhtml~). That means we get the overall structure of the page first:
+
+#+BEGIN_SRC html
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+  </head>
+  <body>
+    <!-- SPACE left here because this is where block body goes -->
+    <footer>Copyright 2018 The Jungle.com.</footer>
+  </body>
+</html>
+#+END_SRC
+
+But then, because the home page "overrode" the body block, we get its content instead of the content from ~layout.dhtml~. So we end up with:
+
+#+BEGIN_SRC html
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="site.css" />
+  </head>
+  <body>
+    <h1>Welcome to the jungle!</h1>
+    <p>
+      Welcome to the jungle.com design refresh. We hope you like it!
+    </p>
+    <footer>Copyright 2018 The Jungle.com.</footer>
+  </body>
+</html>
+#+END_SRC
+
+... which is where we started.
+
+So why is this better?
+
+- One problem we had before was that it was possible to ~render~ the header and forget to ~render~ the footer. Here, that's not possible -- if you extend a template, it surrounds you completely.
+
+- Another problem we had was that we had very little flexibility in our templates. ~header.jsp~ could provide a way to set a title, but not much more than that. It was impossible to add HTML code to a "helper" template like ~header.jsp~. But now that we have blocks, it's easy to put empty blocks wherever we like and child templates can pick and choose the ones that make sense for them to override. Additionally, overriding a block takes place in the template, so we are free to directly add HTML rather than writing it as strings.
+
+- Another nicety is that we can see the whole layout in one file, rather than having to piece it together between the ~header.jsp~ and ~footer.jsp~. If we forget to close a tag, it's more obvious, because both the opening and closing are in the same file.
+
+This style of templating is very powerful! A parent can define blocks, and then a child can "fill in" those blocks, and it can even define its own blocks, that can be then filled in by grand-children, and so on.
+
+Exercise: convert the blog post template to extend the layout we've defined.
+
+Exercise: the home page should have a title of "Welcome to the Jungle", and the blog post pages should have a title of "Jungle Blog: Some Blog Post Title". How can we modify the templates to make this happen?
+
+Exercise: what do we have to add to allow blog post pages to have an additional CSS file (~blogpost.css~) without it being present on the home page?
+*** Next steps: client-side templating
+These templating systems are typically used in server-side systems. In these systems, a request comes in, a bunch of information gets looked up, and we render that information to a response. That response contains HTML that's relatively static. We can sprinkle some JS on it for small stuff, but very complicated web applications that involve updating HTML will often go back to the server, since that's where the templates are.
+
+Let's say we wanted to design an application that let us add elements to a shopping list. As we add each item, we need to add more HTML to the page. But we want the application to be AJAX. One possibility is to have the HTML on the client side instead of the server side. Then, we can render each item as we add it without having to consult the server.
+
+This leads us to libraries like Mustache and Handlebars, which are designed to render templates in the browser.
+
+Another nice thing would be to track changes to our variables in JS and automatically update the DOM. If the DOM is generated by the templates, then it should be easy to render them again with our data. This idea leads us to libraries like React and Vue.
+
+React templates are usually written in a language called JSX, which is embedded in JS. A page might look like this:
+
+#+BEGIN_SRC javascript
+class HomePage extends React.Component {
+  render() {
+    return (
+      <html>
+        <head>
+          <link rel="stylesheet" type="text/css" href="site.css">
+        </head>
+        <body>
+          Welcome to the {location}!
+          <MyFooter />
+        </body>
+      </html>
+    );
+  }
+}
+
+class MyFooter extends React.Component {
+  function render() {
+    return (
+      <footer>Copyright 2018 The Jungle.com.</footer>
+    );
+  }
+}
+#+END_SRC
+
+In JSX, elements are just written straight into the JavaScript code. Wait, isn't this where we started, and what we tried to get away from? Basically, yes. But in the meantime, the culture has changed -- instead of getting enormous blocks of HTML from some guy using Dreamweaver, the expectation is now that the front-end is code that is every bit as powerful and important as the stuff happening on the back-end.
+
+A full treatment of React is outside the scope of this document, but it's worth pointing out some features of the syntax:
+
+- Each React "component" defines its own ~render()~ function explicitly.
+- The render function returns something like the DOM (specifically, it returns a tree of elements).
+- A component can use other components by including it directly in its tree of elements.
+- It's not possible to forget to "close" an element because the syntax reflects an HTML fragment, which means opening and closing tags are balanced.
+- Instead of using ~{{ expression }}~, we do ~{expression}~.
+- We can also use expressions as "attributes" to our elements, which is how we pass arguments to them.
+
+If your application feels like it's too interactive for the old-fashioned "server-side framework which renders HTML which has some JS sprinkled on top", then you might end up using something like React. This ecosystem is still very young, though, and there are enough complications that it's not a decision to be made lightly. If you aren't sure whether your project is a good fit for something like React, ask a senior engineer.
