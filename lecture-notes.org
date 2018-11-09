@@ -2615,6 +2615,8 @@ And a page for individual blog articles which looks like this:
 #+END_SRC
 
 Our job is to write a server program that renders both types of HTML depending on what page it is.
+
+Exercise: take a minute to review the HTML above. Which pieces are the same in the two files? Which pieces are different?
 *** Raw code
 Let's try just writing code that assembles HTML out of strings.
 
@@ -2789,7 +2791,7 @@ OK, but what about other stuff that we might want to add to the ~<head>~ element
 
 This is starting to get us back to where we started, with HTML embedded in code, only now it's almost worse because we have HTML embedded in code embedded in HTML! Yuck.
 *** Django style
-Django templates were invented for the Django web framework and seem to have influenced lots of other systems (such as Twig and Nunjucks; Mustache and Handlebars also look a little similar but are apparently inspired by another system called ctemplates which was invented at Google). The ideas here were that we want to minimize the amount of actual code that happens in the template -- it should be (as much as possible) just pure layout and design, with the bare minimum of code permitted to allow the HTML to be written correctly. Django templates also introduced a new feature, called template inheritance, which helps us with the kinds of problems we were facing before of extensibility.
+Django templates were invented for the Django web framework and seem to have influenced lots of other systems (such as Twig and Nunjucks; Mustache and Handlebars also look a little similar but are apparently inspired by another system called ctemplates which was invented at Google). The ideas here were that we want to minimize the amount of actual code that happens in the template -- it should be (as much as possible) just pure layout and design, with the bare minimum of code permitted to allow the HTML to be written correctly. Django templates also introduced a new feature, called template inheritance, which helps us with the kinds of problems of extensibility we were facing before.
 
 The syntax of Django templates is a little different from other languages. Instead of ~<%= expression %>~, you write ~{{ expression }}~. Also, you can have filters, which are sort of like functions that the template language provides: ~{{ expression|filter }}~. Instead of ~<% code; %>~, you write ~{% code %}~, but be careful because Django templates don't let you write arbitrary code -- only certain commands are allowed. So a simple definition of our blog post template might look like this:
 
@@ -2893,8 +2895,14 @@ So how do we hook into it? We ~extend~ the template. We might write a ~homepage.
 This gets translated into something like this:
 
 #+BEGIN_SRC javascript
+// Implementing inheritance in "vanilla" i.e. pre-ES2015 JS. The details aren't super important...
 function HomePage() {
+  Layout.call(this);
 }
+HomePage.prototype = Object.create(Layout.prototype);
+HomePage.prototype.constructor = HomePage;
+
+// Override just the renderBlockBody function.
 HomePage.prototype.renderBlockBody = function() {
   let output = [];
   output.push("<h1>Welcome to the jungle!</h1>");
@@ -2946,7 +2954,11 @@ So why is this better?
 
 - Another nicety is that we can see the whole layout in one file, rather than having to piece it together between the ~header.jsp~ and ~footer.jsp~. If we forget to close a tag, it's more obvious, because both the opening and closing are in the same file.
 
-This style of templating is very powerful! A parent can define blocks, and then a child can "fill in" those blocks, and it can even define its own blocks, that can be then filled in by grand-children, and so on.
+This style of templating is very powerful! A parent can define blocks, and then a child can "fill in" those blocks, and it can even define its own blocks, that can be then filled in by grand-children, and so on. Anything can be a block if we want it to be. It's entirely up to us!
+
+Note that there's nothing special about the blocks or their names -- ~body~ just happened to be a name I chose. The only thing that matters is that the blocks defined by the child fit into the blocks of the same name in the parent. Blocks aren't magically linked to an HTML element of the same name, and they don't have any intrinsic meaning. They just serve to let one template define some overarching structure, and to have another template "plug in" to that same structure.
+
+We aren't limited in the number of blocks we define or where we put them. We can add one wherever we think a child template might want to override something. One good rule of thumb is to make sure that anything opened in a block gets closed in the same block.
 
 Exercise: convert the blog post template to extend the layout we've defined.
 
