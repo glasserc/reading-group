@@ -2366,6 +2366,7 @@ Local variables
 Dynamic typing
 Tuples and how they differ from lists
 Why I hate CSS
+Intro to web security: XSS, injection attacks, encryption?
 ** Future refactors
 *** "Switch" into dynamic dispatch
 Before:
@@ -3014,3 +3015,375 @@ A full treatment of React is outside the scope of this document, but it's worth 
 - We can also use expressions as "attributes" to our elements, which is how we pass arguments to them.
 
 If your application feels like it's too interactive for the old-fashioned "server-side framework which renders HTML which has some JS sprinkled on top", then you might end up using something like React. This ecosystem is still very young, though, and there are enough complications that it's not a decision to be made lightly. If you aren't sure whether your project is a good fit for something like React, ask a senior engineer.
+** Normalization (SQL without Django)
+A database is another piece of software which is in charge of storing and organizing data[1]. We are going to be using a kind of database called a "relational" database (specifically we're going to start by using PostgreSQL, but most databases that have "SQL" in the name function similarly).
+
+You can think of a relational database as kind of like an Excel workbook. A relational database has "tables", which are like sheets in a workbook. Each table is a collection of rows, each of which has the same set of columns. So you might have a "people" table that looks like this:
+
+| Person  | Number of pets | Signed up date |
+| Ethan   |              1 |     2015-05-01 |
+| Rita    |              0 |     2015-05-18 |
+| Francis |              1 |     2015-05-08 |
+
+And you might have another table that stores hobbies:
+
+| Person  | Hobby        |
+| Ethan   | Chiptune     |
+| Rita    | British rock |
+| Francis | Death metal  |
+| Ethan   | Baking       |
+| Francis | Kendo        |
+| Rick    | Beer         |
+
+If you had this data stored in a relational database, it would be possible to ask it to "put it together" and generate a table like this:
+
+| Person  | Number of pets | Number of hobbies |
+| Ethan   |              1 |                 2 |
+| Rita    |              0 |                 1 |
+| Francis |              1 |                 2 |
+
+"Relational" is a long word so I'll probably use it interchangeably with "SQL" (pronounced "sequel"), even though technically the two things aren't exactly the same.
+
+[1] This is a wild oversimplification, but "database" is a term that gets used a lot in a lot of contexts with subtly different meanings.
+*** Example
+#+BEGIN_SRC psql
+CREATE TABLE people (
+  name TEXT NOT NULL PRIMARY KEY,
+  number_of_pets INTEGER NOT NULL,
+  signed_up_date TIMESTAMPTZ NOT NULL
+);
+#+END_SRC
+
+#+BEGIN_SRC psql
+INSERT INTO people VALUES
+  ('Ethan', 0, '2015-05-01 00:00:00'),
+  ('Rita', 0, '2015-05-18 00:00:00'),
+  ('Francis', 1, '2015-05-08 00:00:00');
+#+END_SRC
+
+#+BEGIN_SRC psql
+SELECT * FROM people;
+#+END_SRC
+
+#+BEGIN_SRC psql
+SELECT * FROM people WHERE name = 'Ethan';
+#+END_SRC
+
+#+BEGIN_SRC psql
+UPDATE people SET number_of_pets = 2 WHERE name = 'Francis';
+#+END_SRC
+
+#+BEGIN_SRC psql
+CREATE TABLE hobbies (
+  person TEXT,
+  hobby_name TEXT UNIQUE NOT NULL
+);
+#+END_SRC
+
+N.B. There should really be a foreign key constraint here but the example includes Rick, who isn't in the "people" table...
+
+#+BEGIN_SRC psql
+INSERT INTO hobbies VALUES
+  ('Ethan', 'Chiptune'),
+  ('Rita', 'British rock'),
+  ('Francis', 'Death metal'),
+  ('Ethan', 'Baking'),
+  ('Francis', 'Kendo'),
+  ('Rick', 'Beer');
+#+END_SRC
+
+N.B. This table is sort of "freestanding" so it's not a problem that Rick doesn't "really exist" in the people table. In a real application, it probably would be!
+
+Trying to compute the number of hobbies for each person:
+
+#+BEGIN_SRC psql
+SELECT person, COUNT(*) FROM hobbies GROUP BY person;
+#+END_SRC
+
+Combining info with the people table:
+
+#+BEGIN_SRC psql
+SELECT p.name, p.number_of_pets, COUNT(h.hobby_name) FROM people p, hobbies h WHERE p.name = h.person GROUP BY p.name;
+#+END_SRC
+
+N.B. This could be done using SQL's "join" functionality, but let's just do it by hand this time.
+
+#+BEGIN_SRC psql
+DROP TABLE people, hobbies;
+#+END_SRC
+*** Modeling
+One of the most important things you do when you're developing an application is to think about what are the entities you're going to have in your application, how they relate to one another, and how you're going to store them. For example, in a hospital management system, you might have patients and doctors and rooms, and patients stay in rooms and doctors visit patients (but doctors don't stay in rooms). Once you have a clear idea of what the entities are, you structure your database to support that. In a SQL world, this means ~CREATE TABLE~ statements, but in a non-SQL world, it might mean defining functions to validate the data you put into/take out of the database.
+
+Let's say we're trying to build an order system. Here's our first idea of what an orders table might look like. This tracks every order made in our system. (The following sections are written against a PostgreSQL database to get you some experience with it, but the same ideas can be expressed using a spreadsheet. I created one at https://docs.google.com/spreadsheets/d/1vwGf_5lq7o-xrT7hFrPR3-avSUXHD0GmmbCmVDuD5zY/edit#gid=877230314 that you can look at instead if you like.)
+*** Denormalized first draft
+#+BEGIN_SRC psql
+CREATE TABLE orders (
+  name TEXT,
+  email TEXT NOT NULL,
+  date TIMESTAMPTZ NOT NULL,
+  items TEXT NOT NULL
+);
+#+END_SRC
+
+#+BEGIN_SRC psql
+INSERT INTO orders VALUES
+  ('Ethan', 'ethan@example.com', '2018-10-01 00:00:00', '1245, 1234, 1221'),
+  ('Rita', 'rita@example.com', '2018-10-02 00:00:00', '111234 , 1232'),
+  ('Ethan', 'ethan@example.com', '2018-10-02 00:00:00', '1245, 1221'),
+  ('Mike', 'mike@example.com', '2018-10-03 00:00:00', '1221, 1222, 1223'),
+  ('Rita', 'ethan@example.com', '2018-10-04 00:00:00', '1254 1221'),
+  ('Mike', 'mike@example.com', '2018-10-03 00:00:00', '1221, 1222, 1223');
+#+END_SRC
+
+#+BEGIN_SRC psql
+SELECT * FROM orders;
+#+END_SRC
+
+#+BEGIN_SRC psql
+DROP TABLE orders;
+#+END_SRC
+There are a couple of problems with this design:
+
+- *Update anomaly.* We see that Rita has two different email addresses (or, to look at it another way, ~ethan@example.com~ has two different names). This seems bad -- an email address should be unique and owned by just one person. However, due to the structure of our database, it's possible to store this kind of inconsistent data. In particular, if we try to update Rita's email address, but we don't get all the rows, we will get this kind of garbage data.
+- *Insertion anomaly.* It's not possible to store information for a user that didn't make an order.
+- *Delete anomaly.* Relatedly, if we delete all of a user's orders, we have implicitly deleted the user, whether we wanted to or not.
+- Mike's order appears twice. Is it a duplicate, or does it represent Mike actually placing two orders? What if we want to correct one but not the other? We won't be able to because the UPDATE command only lets us describe the rows in terms of their values.
+- Items are just plain loose text. This makes it hard to count the number of items in each order, or to check for orders containing e.g. the item 1234.
+*** An attempt at normalization
+- Let's put an ID column on our orders table. That way we'll be able to distinguish whether Mike made two orders or it's a repeat of an existing order.
+- Let's split up the items column. The "item" column should only store one number so that querying is easier. But then how do we represent an order with multiple items? We'll have to have multiple rows.
+#+BEGIN_SRC psql
+CREATE TABLE orders2 (
+  id SERIAL,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  date TIMESTAMPTZ NOT NULL,
+  item_id INTEGER NOT NULL
+);
+#+END_SRC
+
+#+BEGIN_SRC psql
+INSERT INTO orders2 VALUES
+  (1, 'Ethan', 'ethan@example.com', '2018-10-01', 1245),
+  (1, 'Ethan', 'ethan@example.com', '2018-10-01', 1234),
+  (1, 'Ethan', 'ethan@example.com', '2018-10-01', 1221),
+  (2, 'Rita', 'rita@example.com', '2018-10-02', 111234),
+  (2, 'Rita', 'rita@example.com', '2018-10-02', 1232),
+  (3, 'Ethan', 'ethan@example.com', '2018-10-02', 1245),
+  (3, 'Ethan', 'ethan@example.com', '2018-10-02', 1221),
+  (4, 'Mike', 'mike@example.com', '2018-10-03', 1221),
+  (4, 'Mike', 'mike@example.com', '2018-10-03', 1222),
+  (4, 'Mike', 'mike@example.com', '2018-10-03', 1223),
+  (5, 'Rita', 'ethan@example.com', '2018-10-04', 1254),
+  (5, 'Rita', 'ethan@example.com', '2018-10-04', 1221),
+  (6, 'Mike', 'mike@example.com', '2018-10-03', 1221),
+  (6, 'Mike', 'mike@example.com', '2018-10-03', 1222),
+  (6, 'Mike', 'mike@example.com', '2018-10-03', 1223);
+#+END_SRC
+
+We still have the same anomalies from before, but it's at least better. This design meets something called *first normal form*. This is a weak form of normalization that is really meant to let us get stuff into a form that is handleable by a database.
+
+#+BEGIN_SRC psql
+SELECT DISTINCT id FROM orders2 WHERE item_id = 1234;
+#+END_SRC
+
+#+BEGIN_SRC psql
+SELECT DISTINCT name FROM orders2 WHERE item_id = 1221;
+#+END_SRC
+
+#+BEGIN_SRC psql
+DROP TABLE orders2;
+#+END_SRC
+
+[Side note: The Wikipedia example on the First Normal Form page walks us through a different attempt to try to resolve this. Let's say I created my table to be like this:
+
+| Person | Email             |       Date | Item 1 | Item 2 | Item 3 |
+| Ethan  | ethan@example.com | 2018-10-01 |   1234 |   1221 |   1245 |
+| Rita   | rita@example.com  | 2018-10-02 | 111234 |        |        |
+
+In doing this, I'm asserting that EVERY question have exactly 3 choices! Clearly they can't have more choices because there's no where to put them, but I'm also sort of implying that they can't have less choices because what will I put in the 3rd choice? Besides, this is bad form because it makes querying hard -- I have to check that e.g. item 1 is 1234 OR item 2 is 1234 OR item 3 is 1234 -- and generally we would prefer that columns not have any "order" to them.
+
+In other words, notice that columns are *constant* in a relational model, so if you want to have a variable number of something, you have to turn those somethings into rows somehow.]
+*** More normalized
+Second and third normal forms are stricter than first normal form. The basic idea is to focus on "dependencies", which in this context refer to fields whose values should be determined entirely by other fields (from our example before, name should be determined by email). You remove these dependencies by pulling them into their own database.
+
+#+BEGIN_SRC psql
+CREATE TABLE customers (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL
+);
+#+END_SRC
+
+#+BEGIN_SRC psql
+CREATE TABLE orders3 (
+  id SERIAL PRIMARY KEY,
+  customer_id SERIAL REFERENCES customers (id),
+  date TIMESTAMPTZ NOT NULL
+);
+#+END_SRC
+
+#+BEGIN_SRC psql
+CREATE TABLE order_items (
+  order_id SERIAL REFERENCES orders3 (id),
+  item_id INTEGER NOT NULL
+);
+#+END_SRC
+
+#+BEGIN_SRC psql
+INSERT INTO customers VALUES
+  (1, 'Ethan', 'ethan@example.com'),
+  (2, 'Rita', 'rita@example.com'),
+  (3, 'Mike', 'mike@example.com');
+#+END_SRC
+
+#+BEGIN_SRC psql
+INSERT INTO orders3 VALUES
+  (1, 1, '2018-10-01 00:00:00'),
+  (2, 2, '2018-10-02 00:00:00'),
+  (3, 1, '2018-10-02 00:00:00'),
+  (4, 3, '2018-10-03 00:00:00'),
+  (5, 1, '2018-10-04 00:00:00'),
+  (6, 3, '2018-10-05 00:00:00');
+#+END_SRC
+
+#+BEGIN_SRC psql
+INSERT INTO order_items VALUES
+  (1, 1245),
+  (1, 1234),
+  (1, 1221),
+  (2, 111234),
+  (2, 1232),
+  (3, 1245),
+  (3, 1221),
+  (4, 1221),
+  (4, 1222),
+  (4, 1223),
+  (5, 1254),
+  (5, 1221),
+  (6, 1221),
+  (6, 1222),
+  (6, 1223);
+#+END_SRC
+
+- This design gets rid of our anomalies:
+  - It's possible to insert a customer without orders, or delete orders without getting rid of customers.
+  - It's impossible to have inconsistent data -- email determines name. We can even put ~UNIQUE~ on the email field. Similarly, an order can only have one date.
+- We still have problems if we try to have the same item multiple times in a given order.
+  - One way we could try to solve this is by adding an "item position" to the ~order_items~ table, or we could add a unique ~orderitem_id~ column.
+
+But what if we want all the data together at once, like we had before? Like what if we need to generate an invoice?
+
+#+BEGIN_SRC psql
+SELECT c.name, c.email, o.date, oi.item_id FROM customers c, orders3 o, order_items oi WHERE c.id = o.customer_id AND oi.order_id = o.id;
+#+END_SRC
+
+#+BEGIN_SRC psql
+DROP TABLE customers, orders3, order_items;
+#+END_SRC
+*** In JS
+Of course, the ideas of denormalization and normalization are present in any place you structure data. For example, we could reproduce the same denormalized first draft in JS using something like:
+
+#+BEGIN_SRC javascript
+// Defining a single order
+let order1 = {
+  "name": "Ethan",
+  "email": "ethan@example.com",
+  "date": "2018-10-01",
+  "items": [1245, 1234, 1221],
+};
+
+// Defining an array of them
+let orders = [
+  order1,
+  { name: "Rita", email: "rita@example.com", date: "2018-10-02", items: [111234, 1232]},
+  { name: "Ethan", email: "ethan@example.com", date: "2018-10-02", items: [1245, 1221]},
+  { name: "Mike", email: "mike@example.com", date: "2018-10-03", items: [1221, 1222, 1223]},
+  { name: "Rita", email: "ethan@example.com", date: "2018-10-04", items: [1254, 1221]},
+  { name: "Mike", email: "mike@example.com", date: "2018-10-03", items: [1221, 1222, 1223]},
+];
+#+END_SRC
+
+You don't get SQL, so any analysis/combination you want to do has to be done in JS:
+
+#+BEGIN_SRC javascript
+orders.filter(o => o.items.includes(1221));   // get the orders where item 1221 was purchased
+
+// JS doesn't have "select distinct", so if we want that, we have to write it ourselves:
+let names = {};
+orders.filter(o => o.items.includes(1221)).map(o => o.name).forEach(name => names[name] = true);
+Object.keys(names)
+#+END_SRC
+
+N.B. We get arrays in JS so handling items is already better than in the spreadsheet case. It's also possible to refer to an array element by its index rather than with an ~UPDATE~ query, so we can fix a single order if we want:
+
+#+BEGIN_SRC javascript
+orders[5].name = "Francis";
+#+END_SRC
+
+But it's still denormalized and we still have all the same problems of inconsistency/update anomalies.
+
+We can normalize this data in a variety of ways. Here's one where we use the customer's position in the array as their ID.
+
+#+BEGIN_SRC javascript
+let customersWithId = [
+  { id: 0, name: "Ethan", email: "ethan@example.com" },
+  { id: 1, name: "Rita", email: "rita@example.com" },
+  { id: 2, name: "Mike", email: "mike@example.com" }
+];
+
+let ordersWithCustomerId = [
+  { customerId: 0, date: "2018-10-01" },
+  { customerId: 1, date: "2018-10-02" },
+  { customerId: 0, date: "2018-10-02" },
+  { customerId: 2, date: "2018-10-03" },
+  { customerId: 0, date: "2018-10-04" },
+  { customerId: 2, date: "2018-10-03" }
+];
+
+// Match order date with customer name
+ordersWithCustomerId.map(o => {name: customersWithId[o.customerId].name, date: o.date});
+#+END_SRC
+
+This is normalized in the same way as the SQL example ~orders3~. (I put the customer ID in the ~customersWithId~ array but really I don't have to, they already have their ID implied by their array indices.) Because the customer information is not duplicated, I still have no possibility of update anomalies.
+
+Here's another approach where we get rid of IDs entirely!
+
+#+BEGIN_SRC javascript
+let customerObjects = [
+  { name: "Ethan", email: "ethan@example.com" },
+  { name: "Rita", email: "rita@example.com" },
+  { name: "Mike", email: "mike@example.com" }
+];
+
+let ordersWithCustomerObjects = [
+  { customer: customers[0], date: "2018-10-01" },
+  { customer: customers[1], date: "2018-10-02" },
+  { customer: customers[0], date: "2018-10-02" },
+  { customer: customers[2], date: "2018-10-03" },
+  { customer: customers[0], date: "2018-10-04" },
+  { customer: customers[2], date: "2018-10-03" }
+];
+#+END_SRC
+
+If you try to visualize this using your browser's dev tools, it'll show you that each order has its own "customer" field. But in fact the customers are shared by the orders. You can prove this:
+
+#+BEGIN_SRC javascript
+orders2[3].customer.name   // Mike
+orders2[5].customer.name   // Mike
+orders2[3].customer.name = "Francis";
+orders2[5].customer.name   // Francis
+#+END_SRC
+
+In other words, you can't have an update anomaly here either.
+*** Final thoughts
+Why normalize? It gives our data structure.
+
+Why *denormalize*? Sometimes you do that too because having data in a "flat" structure can be faster.
+
+Some other random stuff:
+
+- A great essay about [[https://web.archive.org/web/20170727224913/https://qntm.org/gay][Gay marriage: the database engineering perspective]]. (This is an archive.org link because it seems like he took it down at some point.) There's also a follow-up, [[https://qntm.org/support][Obergefell v. Hodges: the database engineering perspective]], about the follow-up once gay marriage became legal in the United States.
+- "Show me your flowcharts and conceal your tables, and I shall continue to be mystified. Show me your tables, and I won’t usually need your flowcharts; they’ll be obvious." -- [[https://en.wikiquote.org/wiki/Fred_Brooks][Fred Brooks]], in The Mythical Man-Month
+- List of SQL commands from the Postgres documentation: https://www.postgresql.org/docs/current/sql-commands.html
+- Wikipedia on database normalization: https://en.m.wikipedia.org/wiki/Database_normalization
