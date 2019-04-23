@@ -3387,3 +3387,325 @@ Some other random stuff:
 - "Show me your flowcharts and conceal your tables, and I shall continue to be mystified. Show me your tables, and I won’t usually need your flowcharts; they’ll be obvious." -- [[https://en.wikiquote.org/wiki/Fred_Brooks][Fred Brooks]], in The Mythical Man-Month
 - List of SQL commands from the Postgres documentation: https://www.postgresql.org/docs/current/sql-commands.html
 - Wikipedia on database normalization: https://en.m.wikipedia.org/wiki/Database_normalization
+** Iteration in JavaScript
+This falls under the category of "fundamentals" -- the equivalent of dribbling in basketball. So far, we've focused on making the program work, which has mostly boiled down to "use the simplest thing that works", but now I want to focus on the next step, going from code that works to clean, idiomatic code, and to that end, I want to drill a little bit on all the options we have available. Knowing these options is part of what it means to have a deeper knowledge of JavaScript.
+
+Besides that, these options can save you lines of code as well as better express intent, both of which can come in handy on e.g. a whiteboard coding problem.
+
+First let's talk about arrays, and then we'll talk about objects, and then we'll talk about iterables.
+*** Arrays: basic for loop
+This looks like this:
+
+#+BEGIN_SRC javascript
+  let a = [4, 9, 15];
+  for (let i = 0; i < a.length; i++) {
+      // do something with a[i]
+  }
+#+END_SRC
+
+This is the plain, bog-standard for loop. It's easy to remember because it's the same for loop style that you might use for other kinds of looping. Here we use a variable ~i~ which goes through every index in the array, and we use that index to look something up in the array, and then we operate on the thing that we got.
+
+Use this style when:
+
+- You need some more complicated iteration or termination condition. For example, you want to look at every second element, or you want to stop once you find a certain element.
+- You can't think of any better alternative.
+*** Arrays: forEach
+One annoyance in the previous example is that we have to create this new ~i~ variable that we have to keep track of, but actually we don't care about it. We just use it to refer to elements of the array. We can also just access the elements more directly using the ~Array.forEach~ method:
+
+#+BEGIN_SRC javascript
+  let a = [4, 9, 15];
+  a.forEach(function(element) {
+      // do something with element
+      console.log(element);
+  });
+#+END_SRC
+
+~forEach~ is pretty interchangeable with the above ~for~ loop -- maybe it's a little fancier, but that's all.
+
+The callback function is called with ~element, index, array~, so if you need the index as well as the element, you can just pass a function of two arguments.
+
+~forEach~ itself returns ~undefined~, so using it is a way to signal that you're doing something with a side effect here.
+
+Use this style when:
+
+- You want to write a ~for~ loop but don't actually need the index.
+- You want to look a little more sophisticated than just writing a ~for~ loop.
+
+Personally, I don't think the ~forEach~ method is always an improvement on a base ~for~ loop, but it's a matter of taste so your opinion may differ.
+*** Arrays: map
+Sometimes you want to go through an array and build up a new array. For example, maybe you have a bunch of URLs, and you want to fetch each one, which produces a Promise, and then use Promise.all() to wait until you get them all back. For this, you should use ~map~:
+
+#+BEGIN_SRC javascript
+  let a = ["http://google.com/", "http://en.wikipedia.org/"];
+  let b = a.map(function(element) {
+      return fetch(a);
+  });
+  return Promise.all(b);
+#+END_SRC
+
+Use this when:
+
+- You want to transform one array into another one.
+
+Don't use this style when:
+
+- Any element depends in some way on previous elements.
+- You need to invoke side effects. Using ~map~ is a way of expressing that the essence of what you're doing is pure, and that the return value is what's important.
+
+Refactor to this when you see:
+
+#+BEGIN_SRC javascript
+  let a = [4, 9, 15];
+  let b = [];
+  for (let i = 0; i < a.length; i++) {
+      b.push(/* some result computed from a[i] */);
+  }
+#+END_SRC
+*** Arrays: filter
+Another common operation is to find all the elements of an array matching some condition. For example, maybe you want to go through an array of URLs and only fetch the ones that point to Wikipedia.
+
+#+BEGIN_SRC javascript
+  let a = ["http://en.wikipedia.org/wiki/Manhattan", "http://maps.google.com/"];
+  let b = a.filter(function(element) {
+      // return true if element should be included in b
+      // N.B. Don't actually compare URLs like this
+      return element.startsWith("http://en.wikipedia.org/");
+  });
+#+END_SRC
+
+Like ~map~, use of ~filter~ is a way of pushing towards a functional style and should not be mixed with side effects.
+
+Use filter when:
+
+- You want to focus on certain elements of an array.
+- It's easy to express whether you want an element or not according to just that element (without regard to previous elements).
+
+Refactor to this when you see:
+
+#+BEGIN_SRC javascript
+  let a = [4, 9, 15];
+  let b = [];
+  for (let i = 0; i < a.length; i++) {
+      if (/* some condition of a[i] */) {
+          b.push(a[i]);
+      }
+  }
+#+END_SRC
+*** Arrays: reduce
+Finally, it can be helpful to combine all elements into a single "summary" value. For this we use ~reduce~. The classic examples of using this are "sum" and "product" functions:
+
+#+BEGIN_SRC javascript
+  function sum(arr) {
+      return arr.reduce((acc, elem) => acc + elem, 0);
+  }
+
+  function product(arr) {
+      return arr.reduce((acc, elem) => acc * elem, 1);
+  }
+#+END_SRC
+
+But really it can be used to implement any kind of looping construct, where the "state" of your loop (the variables that you would normally be changing) are passed and returned explicitly as an "accumulator". For example, maybe we want to implement a simple calculation language. Each command in our language is either a number, or the word "sum" or "product" (meaning, take the sum or product of all the numbers since the last word).
+
+#+BEGIN_SRC javascript
+  let a = [9, 15, "sum", 2, 12, 1, "product", 12, "sum"];
+  let output = a.reduce((acc, elem) => {
+      if (elem == "sum") {
+          acc.result.push(sum(acc.current));
+          acc.current = [];
+      } else if (elem == "product") {
+          acc.result.push(product(acc.current));
+          acc.current = [];
+      } else {
+          acc.current.push(elem);
+      }
+      return acc;
+  }, {current: [], result: []});
+#+END_SRC
+
+Personally, I often find ~reduce()~ isn't clearer than writing the equivalent loop. (Guido van Rossum wrote [[https://www.artima.com/weblogs/viewpost.jsp?thread=98196][much the same thing in 2005]].) I've also encountered code that was written to use ~reduce~ in a clean, functional, immutable way that turned out to be a performance bottleneck and fixing it meant converting it to a loop.
+
+#+BEGIN_SRC javascript
+  let a = [9, 15, "sum", 2, 12, 1, "product", 12, "sum"];
+  let current = [];
+  let result = [];
+  // Or you could use forEach here if you want
+  for (let i = 0; i < a.length; i++) {
+      let element = a[i];
+      if (element == "sum") {
+          result.push(sum(current));
+          current = [];
+      } else if (element == "product") {
+          result.push(product(current));
+          current = [];
+      } else {
+          current.push(element);
+      }
+  });
+#+END_SRC
+
+Use ~reduce~ when:
+
+- You want to show off your functional programming skills.
+- You need to define ~sum~ or ~product~.
+*** Arrays: other methods
+- ~every~: check if all elements match a condition, returning immediately at the first one that doesn't: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every
+- ~some~: check if at least one element matches a condition, returning immediately at the first one that does: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some
+- ~find~: find the first element matching a condition: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find
+- ~findIndex~: same as ~find~, but returning its index: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex
+*** Objects: basic for loop
+Now let's talk about objects. Just a recap: What are commonly called "objects" in JavaScript are really a poor man's hash table. A hash table is like an array, but instead of looking up elements by numeric index, the index can be some other non-numeric thing, like a string. (In JavaScript objects, it has to be a string, but you can use Map instead. More on this later.)
+
+JavaScript provides the following construct to loop over an object:
+
+#+BEGIN_SRC javascript
+  let a = {"Ethan": 4, "Francis": 9, "Rita": 15};
+  for (let name in a) {
+      // do something with name or a[name]
+  }
+#+END_SRC
+
+There are a couple caveats/known issues with this syntax:
+
+- This loop iterates over properties that were inherited from other classes. So, for example, this simple JS OOP example iterates over both ~hello~ and ~myMethod~ despite the fact that neither is defined on my ~e~ instance:
+
+#+BEGIN_SRC javascript
+  function EthanTest() {
+  }
+  EthanTest.prototype.hello = 4
+
+  EthanTest.prototype.myMethod = function() {}
+
+  let e = new EthanTest();
+  for (let name in e) {
+    console.log(name, e[name]);
+  }
+#+END_SRC
+
+(This doesn't affect classes defined using new-school ~class~ syntax, so maybe it's not a big deal any more.)
+
+In particular, some older client-side JS libraries (Prototype.js and Mootools?) add stuff directly to Array.prototype or String.prototype, so received wisdom is not to use this on arrays or strings. (But then, you probably won't work on sites adding stuff to Array.prototype or String.prototype, or if you do, you'll add non-enumerable properties, so maybe this won't be an issue either.)
+
+- The ~for ... in~ syntax is a little opaque. In particular it looks very much like the ~for ... of~ syntax which is arguably more useful (about which more later). So pay attention to that little word.
+
+There are some helper methods that help you iterate over just the parts of the key-value mapping that you care about:
+*** Objects: keys
+In particular, you can call ~Object.keys~ to get an ~Array~ of the keys in the object. This function doesn't return any "inherited" keys. Then you can iterate over the keys however you like:
+
+#+BEGIN_SRC javascript
+  let a = {"Ethan": 4, "Francis": 9, "Rita": 15};
+  let keys = Object.keys(a);
+  for (let i = 0; i < keys.length; i++) {
+      // do something with keys[i] or a[keys[i]]
+  }
+#+END_SRC
+
+... or use whatever other ~Array~ methods you want on the keys:
+
+#+BEGIN_SRC javascript
+  let a = {"Ethan": 4, "Francis": 9, "Rita": 15};
+  console.log(Object.keys(a).filter(k => k.length <= 5));
+#+END_SRC
+
+Use this method when:
+
+- You don't need the object itself, but just its keys, or some kind of manipulation of the keys.
+*** Objects: values
+If you don't actually need the keys, you can equally just get the values:
+
+#+BEGIN_SRC javascript
+  let a = {"Ethan": 4, "Francis": 9, "Rita": 15};
+  console.log(Object.values(a).map(x => x ** 2));
+#+END_SRC
+
+Use this method when:
+
+- You don't actually care about the keys. Maybe you were just using them to ensure that duplicates were filtered out or something.
+*** Objects: entries
+If you need the keys and the values, there's a method that provides that too, which is called ~entries~:
+
+#+BEGIN_SRC javascript
+  let a = {"Ethan": 4, "Francis": 9, "Rita": 15};
+  let entries = Object.entries(a);
+  for (let i = 0; i < entries.length; i++) {
+      let [key, value] = entries[i];
+      // Do something with key and/or value
+  }
+#+END_SRC
+
+(Note that this uses "destructuring assignment": ~let [key, value] = something~. This is a neat ES6 feature which makes the ~entries~ method quite a bit more useful.)
+
+Use this method when:
+
+- You definitely want both the key and the value. Using ~entries~ makes that a bit clearer than iterating over the object itself, and the keys/values are more clearly paired.
+- You want to use fancy Array methods like ~filter~ or ~map~ but need both the keys and the values.
+*** Interlude: Maps
+ES6 also includes a Map class. If JS objects are a poor man's hash table, Map is the regular man's hash table. You can use anything as a key. For example, check this out:
+
+#+BEGIN_SRC javascript
+  let a = {};
+  a[5] = "hello";
+  let firstKey = Object.keys(a)[0]
+  console.log(typeof firstKey);
+
+  let m = new Map();
+  m.set(5, "hello");
+  let mapFirstKey = Array.from(m.keys())[0];
+  console.log(typeof mapFirstKey);
+#+END_SRC
+
+(Note: this ~Array.from~ is unfortunate. We'll talk more about that in a little bit.)
+
+This can be handy if you want to use actual numbers (or arrays, or functions...) as the keys in your lookup table.
+
+The disadvantage is that there's no native syntax for Maps the way there is for Objects. Instead you have to do this Java-esque ~get~/~set~ nonsense.
+
+If you use Map, the implication is that you're creating some kind of lookup structure, with all the keys the same type and all the values the same type (although not necessarily the same type as the keys). You can use objects in this way too, but objects are also used to pass around options or to parse JSON responses, so objects don't really imply that same lookup-structure-y-ness. In terms of data structure design, I'd expect a Map to have consistent keys and consistent values, and if I had heterogeneous keys/values, I'd define a class and use instances of that class. JavaScript objects are somewhere between the two.
+*** Iterables: for ... of
+Most languages eventually find that there's a common pattern of looping over different data structures, and introduce a common looping structure to make it easy to write code that is agnostic about the data structure it operates on. In JavaScript this structure is called "[[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterable_protocol][the iterable protocol]]". Any class that implements the iterable protocol can be iterated over using a ~for ... of~ loop:
+
+#+BEGIN_SRC javascript
+  let a = [4, 9, 15];
+  for (let x of a) {
+      console.log(x);
+  }
+#+END_SRC
+
+Again, be careful -- ~for ... of~ can look like ~for ... in~ at a glance.
+
+Whoever implements a class gets to decide what you get when you iterate over the instances of that class. In this case, when you iterate over arrays, you get each element of the array. When you iterate over Maps, you get ~[key, value]~:
+
+#+BEGIN_SRC javascript
+  let m = new Map();
+  m.set("Ethan", 4);
+  m.set("Francis", 9);
+  m.set("Rita", 15);
+  for (let [key, value] of m) {
+      console.log(key, value);
+  }
+#+END_SRC
+
+You can't iterate over an object using ~for ... of~ (you'll get an error that objects aren't iterable) but you can iterate over the arrays you get from ~Object.keys~, ~Object.values~, or ~Object.entries~.
+*** Iterators: Map.prototype.keys and Map.prototype.values
+We saw that when you get the keys of an object using ~Object.keys~, you get an array of keys. Arrays have all those nice methods you saw earlier like ~filter~, ~map~, so that's all great. However, arrays need memory, and allocating that memory can be a waste if you only need to go over some of those elements. So another approach is to return an *iterator*, which is like a tiny data structure that keeps track of where you were and gives you the next element when you ask for it. The Map equivalent of the Object functions ~keys()~, ~values()~, and ~entries()~ all return iterators.
+
+Because JavaScript, these iterators do not share the useful array methods we saw earlier. However, you can convert an iterator to an array if you need to using ~Array.from~:
+
+#+BEGIN_SRC javascript
+  let m = new Map();
+  m.set("Ethan", 4);
+  m.set("Francis", 9);
+  m.set("Rita", 15);
+  for (let key of m.keys()) {
+      // ...
+  }
+
+  // or ...
+  let keys = Array.from(m.keys());
+#+END_SRC
+*** Recap
+- ~for (let i = 0; i < ...; i++)~ is a fine default but sometimes you can do better.
+- ~for ... of~ is pretty nice.
+- ~for ... in~ can be useful sometimes. So can ~forEach~. But feel free not to use them if you think they make your intentions less clear.
+- You can sometimes build up chains of array methods rather than explicitly writing out a loop, which can make your code feel more declarative and elegant.
+- Maps are nice.
+** How to jump into a bigger codebase
