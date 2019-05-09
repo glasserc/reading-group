@@ -3709,3 +3709,443 @@ Because JavaScript, these iterators do not share the useful array methods we saw
 - You can sometimes build up chains of array methods rather than explicitly writing out a loop, which can make your code feel more declarative and elegant.
 - Maps are nice.
 ** How to jump into a bigger codebase
+** Elm, part 1: the language
+*** What is Elm?
+Elm is an interesting point in the universe of front-end tools. Elm is a programming language which has been designed, along with its tools and libraries, specialize in making front-end programming as pleasant as possible. Some aspects of this decision:
+
+- Whereas the trend is to make a programming language general-purpose -- for example, for JavaScript to "break out" of the browser and run in Node -- the Elm designers steadfastly refuse to even consider running Elm "on the back-end".
+
+- The Elm designers focus on ease-of-use and simplicity, even to the extent of incredibly thorough compiler error messages. Instead of adding features or language syntax, Elm tends to stick with a relatively small core of fairly clear language primitives.
+
+- There are other languages that fit a similar role to Elm -- CoffeeScript, TypeScript, or BuckleScript/Reason that Facebook has come out with recently. Almost all of the languages in this category try to make it seamless or at least easy to interoperate with JavaScript, so they can take advantage of existing JavaScript code. Elm takes the opposite approach -- Elm treats JavaScript as dangerous and quarantines it. Unlike the languages which are built "on top" of JavaScript, Elm is a statement that JavaScript cannot be fixed, it can only be replaced.
+*** Why Elm?
+Why bother with Elm? It's relevant to us because:
+
+- Elm makes writing front-end code more pleasant by eliminating some of the problematic things in JavaScript. We'll see more of how this works in a little bit.
+
+- It's interesting pedagogically. It's very different from the other "general-purpose" languages we've seen (JavaScript, Python). Learning Elm will expand our viewpoint on programming in a way that may make us a better programmer in other languages too.
+
+- I wanted to use Elm because it was interesting to me personally, and now I'm making the rest of you learn it too.
+
+In the interests of completion, we should also observe that:
+
+- Elm's focus on simplicity sometimes comes at the cost of power or flexibility. Elm tends to give you just one tool to solve a problem, which can be frustrating.
+
+- Elm is a very young language -- meaning it's immature. Sometimes there are bugs in the compiler. Sometimes the "best practices" are still being developed. In the cases where there is more than one way to do something, it may not be well-understood which way is good or bad. Sometimes progress on Elm is slow, and sometimes it goes through drastic changes. Version 0.19 broke all the 0.18 code, for instance, and you will have to be aware sometimes which one is described in a webpage.
+
+- The Elm ecosystem is still small. In JavaScript you can usually find a library on npm that will do what you want; often, nobody has written a library yet that will do it for Elm. The documentation isn't always everything it could be. Whereas Python had a thorough "language syntax reference", Elm doesn't. (There's https://github.com/izdi/elm-cheat-sheet, but it's unofficial, and oh yeah, it's for 0.18.)
+
+- In particular, Elm is largely the brainchild of a guy named Evan Czaplicki and his colleagues at a company called NoRedInk. They have some (let's say) unorthodox methods of running an open source project/community and some strong opinions about language design and programming style in general. As a result, the Elm community is still small, although very vocal. They tend to try to be friendly and helpful, and especially considerate of new learners, but they sometimes come off as condescending. In these notes, I will occasionally observe that "Evan writes X" or "Evan thinks X" -- this is not an endorsement, but merely a note about the current conditions in this community.
+*** What makes Elm different?
+Here's a look at some Elm code:
+
+#+BEGIN_SRC elm
+  type IntList
+      = Nil
+      | Cons Int IntList
+
+  {-| Compute the length of a linked list.
+  -}
+  length : IntList -> Int
+  length l =
+      case l of
+          Nil ->
+              0
+
+          Cons _ remainder ->
+              -- This is the recursive case.
+              length remainder + 1
+#+END_SRC
+
+This is an implementation of a linked list and a ~length~ function for it. (This is just an example; Elm already has a built-in linked list type.)
+
+Let's break this down a little bit:
+
+- ~type IntList~: defines a new *type*. In an object-oriented language like JavaScript or Python, we would typically define classes, but in a functional language, instead you define types. Built-in types include ~Int~, ~String~, and many others. Types have names which always begin with capital letters.
+
+- ~Nil~: the things after a type are the different variants. The first variant of the ~IntList~ type is called ~Nil~. This means that you can use ~Nil~ anywhere and it is a valid ~IntList~. Like types, variants must also have names that begin with a capital letter.
+
+- ~Cons Int IntList~: defines the other variant of ~IntList~ which is called ~Cons~. Unlike ~Nil~, ~Cons~ is not standalone. ~Cons~ contains an ~Int~ and a ~IntList~. ~Cons~ (and also ~Nil~, but it's more obvious here) is a *constructor*. Like constructors in object-oriented languages, constructors are functions that let us "produce" a member of a type. (In this example, if we call ~Cons~ with an ~Int~ and an ~IntList~, we will have a ~IntList~.) However, unlike constructors in object-oriented languages, which are responsible for setting up initial state of an object, here the constructor is almost inert.
+
+- ~{-| .. -}~: this is a documentation comment which can serve to describe the thing following it (or sometimes, the whole module).
+
+- ~length : IntList -> Int~. This is a *type signature*, which tells us the type of something. All top-level things in Elm must have a type signature. This type signature says "~length~ has the type (~:~) of a function (~->~) which takes ~IntList~ and produces ~Int~". Type signatures are always of the form ~thing : type~. The ~->~ arrow is how we describe functions. More about this later.
+
+- ~length l =~: begins the function definition. In Elm, function definitions look like mathematical equations. ~length~ is a function of one argument, so we see an argument before the equals sign, but you use the same syntax to define things that don't have arguments (or sometimes even for some that do). Note that ~length~ has a name that starts with a lowercase letter because it isn't a type.
+
+- ~case l of~. This is called pattern matching. This syntax says "check if ~l~ is any of these variants". It's kind of like a giant if-elseif-else statement, or a switch statement (in languages that have them).
+
+- ~Nil ->~: if ~l~ is ~Nil~, then we follow this branch and produce the value 0.
+
+- ~Cons _ remainder ->~: on the other hand, if we have a ~Cons~, we want to do something different. In particular, we will want to use the ~IntList~ that was "contained" in the ~Cons~. By using pattern matching, we not only get to check what variant we have, but get to extract its data. This is the other side of the "constructor" coin in Elm -- not only is it used to create values, but also to deconstruct them.
+
+- ~-- This is the recursive case.~. Elm supports single-line comments beginning with ~--~ and multi-line comments beginning with ~{-~ and ending with ~-}~. (Documentation comments, above, start with ~{-|~, with the ~|~ indicating "the thing below".)
+
+- ~length remainder + 1~: this is the recursive application of the function. In Elm, to call a function, you just write the name of the function followed by any arguments. Function application "binds tightly", so ~length remainder + 1~ means ~(length remainder) + 1~ and not ~length (remainder + 1)~.
+
+When you look at Elm code, you will notice first that the syntax is very different from other languages you've seen. (Instead of the C family languages, which inspired JavaScript syntax, Elm is more inspired by the ML family of languages, which includes Haskell.) But apart from this surface difference, there are two important structural differences that make Elm so different:
+
+- Elm is *statically typed*. This means that every variable has a type that can be determined before your code even runs. (Whereas in a dynamically-typed language, the contents of a variable are not really known until runtime.) Before your Elm code can run, it will be *typechecked*, which means each operation is examined to see whether it makes sense with the types that we have.
+
+  Statically typed languages have the advantage that they can prevent a lot of the goofy stuff that happens in JavaScript. In JavaScript, if you try to add a number to an object, you get ~"[object Object]5"~. In Elm, you just can't do this; if you try, the compiler will yell at you and you won't be able to run your code. This also prevents stuff like ~undefined is not a function~ or ~could not access property foo of null~. Static typing has the *disadvantage* that you have to spend more time thinking about your program before you write any of it. You will have to figure out what types you need and how they fit together. This effort usually leads to a better program, but it can be frustrating and feel "slower" than just writing JavaScript.
+
+- Elm is a *pure* language, which means that no operation can have a side effect.[*] This means that when you call a function, the only thing it can do is return a value. This also means that you can't change a variable (doing so is, by definition, a side effect). It *also* means that if you call a function with the same arguments, you *must* get the same results. The advantage here is that no data is hidden and no code can change a variable somewhere without you knowing about it. The disadvantage is that a lot of things tend to rely on some kind of implicit state, and in Elm you have to always make that state explicit.
+
+[*] Wikipedia instead describes languages as "purely functional", in which operations are expressed as mathematical functions, with their output only depending on their arguments, or alternately by forbidding mutable data. This might be more correct from a theoretical standpoint, or maybe it's saying the equivalent thing.
+
+The upshot here is that some things that seem like they would be easy in JavaScript are suddenly going to seem very hard. (For example, getting a random number is a simple function call in JavaScript, but in Elm it's more complicated.) The good news is that some things that are hard in JavaScript are simpler or at least more pleasant in Elm. But either way, it's going to be jarring. When this happens, just remember that Ethan said it was OK.
+
+You'll note that there's no ~return~ statement in Elm. There aren't really even statements at all! No operation can have a side effect, so every operation must have a value, which means the language only has expressions. Even ~if~ statements have values -- you could do ~xIsBig = if x > 5 then True else False~.
+
+There's also no real "loop" operations -- no ~for~, no ~while~. Instead, you have to write your own recursive functions (or use helpers like ~fold~).
+
+Vocabulary:
+
+- We no longer have *classes*; now we have *types*. Instead of *objects* of classes, we have *values* of those types.
+
+- We still have *constructors*, although they work a little differently.
+*** Polymorphism and parametricity
+Some functions have a type that is more complicated. For example, consider the *identity function*, ~identity x = x~. What is the type of this function? It can take any type and returns that type. Writing ~Int -> Int~ is too restrictive -- it's simultaneously ~String -> String~.
+
+The answer is that a type signature can have variables in it. In this case, we can say ~identity : a -> a~. Here, ~a~ is not a specific type, but it can take on any type. When we do ~identity 5~, Elm sees that we're applying ~identity~ to an ~Int~, and so ~a~ must be ~Int~ here, and since ~identity~ returns ~a~, it must return an ~Int~ too.
+
+We say that the ~identity~ function is polymorphic, or generic. Sometimes you also see the word "parametricity" tossed around.
+
+The same principles apply when we define types. Above, we defined an ~IntList~ type, which could be useful for managing lists of integers. What if we want to have a list of strings? Do we need to write a whole new type? No, we can do:
+
+#+BEGIN_SRC elm
+  type MyList a
+      = Nil
+      | Cons a (MyList a)
+#+END_SRC
+
+Now, ~MyList a~ is the type of a list that holds ~a~ elements. ~MyList Int~ is the type of lists that hold ~Ints~, etc. ~MyList~ by itself is incomplete -- you need to provide another type for it to "work".
+
+This idea is pretty funky and you may stumble over it the first few times you use it.
+*** Some useful types
+Here are some examples of this kind of generic type. First, we've already seen that lists are generic -- the list type in Elm is called ~List~.
+
+There's a type called ~Maybe~. It's defined like this:
+
+#+BEGIN_SRC elm
+  type Maybe a
+      = Just a
+      | Nothing
+#+END_SRC
+
+This type is central to how we avoid "undefined is not a function" in Elm. The type ~Maybe~ lets you express that something is optional or that it can "fail".
+
+You can use ~Nothing~ sort of the way you would use ~undefined~ or ~null~ in JavaScript, but the difference is that ~Nothing~ is part of this ~Maybe~ type, so you can't pass it for just anything.
+
+There's also ~Result~:
+
+#+BEGIN_SRC elm
+  type Result e a
+      = Err e
+      | Ok a
+#+END_SRC
+
+This lets you represent "failure with a reason".
+
+These types are very handy and appear all over the place. There's also a bunch of utility methods to help when working with them: https://package.elm-lang.org/packages/elm/core/latest/Maybe and https://package.elm-lang.org/packages/elm/core/latest/Result.
+
+N.B. It's possible to overuse these. If you find yourself using a type with ~Maybe~ s nested in ~Result~ s or the other way around, that's a good clue that you might want to define a new type. It's also possible to lean on ~Maybe~ as a crutch instead of correctly modeling when you will have (or not have) the related value. More about this later.
+*** Partial function application
+Here is how you define a function of more than one argument in Elm:
+
+#+BEGIN_SRC elm
+  push : Int -> IntList -> IntList
+  push a l =
+      Cons a l
+#+END_SRC
+
+(This function is completely useless, because you could just use ~Cons~ directly, but we'll use it to demonstrate some stuff about syntax.)
+
+The syntax for type signatures with multiple arguments may look a little strange: ~Int -> IntList -> IntList~. It almost looks like, instead of one function of two arguments, there's two functions of one argument! And the reason for this is that actually, it is. In Elm (and many related languages) there's the concept of "partial function application", which means you can provide e.g. only one of the two arguments, and in so doing, create a new function. So although you could do this:
+
+#+BEGIN_SRC elm
+  push5 : IntList -> IntList
+  push5 l =
+      push 5 l
+#+END_SRC
+
+You can just do this:
+
+#+BEGIN_SRC elm
+  push5 : IntList -> IntList
+  push5 =
+      push 5
+#+END_SRC
+
+Sometimes this is also called "currying" (although technically, currying is something else; everyone just uses the word wrong). So in a real sense, ~push~ is a function that takes one argument, and which returns a function that takes the second argument. Elm does this for us automatically.
+*** More operators
+We said above that function application binds tightest. There are some fun operators that you can use instead of writing oodles of parentheses. ~|>~ is sometimes called a "pipe" -- it lets you feed arguments through functions:
+
+#+BEGIN_SRC elm
+  distance : Float -> Float -> Float
+  distance x y =
+      x * x + y * y
+          |> sqrt
+#+END_SRC
+
+Which is the same as
+
+#+BEGIN_SRC elm
+  distance : Float -> Float -> Float
+  distance x y =
+      sqrt (x * x + y * y)
+#+END_SRC
+
+There's also ~<|~, which serves to let you delimit the rest of an expression. So another way to write the above is as
+
+#+BEGIN_SRC elm
+  distance : Float -> Float -> Float
+  distance x y =
+      sqrt <| x * x + y * y
+#+END_SRC
+
+There are also "function composition" operators ~<<~ and ~>>~. ~(f << g) x~ is the same as ~f (g x)~. ~(f >> g) x~ is the same as ~g (f x)~. Combined with partial application, these can save you from writing lots of simple boilerplate functions, although it's possible to get too clever with it. Here's an example:
+
+#+BEGIN_SRC elm
+  removeEmpty : List String -> List String
+  removeEmpty strings =
+      List.filter (not << String.isEmpty) strings
+#+END_SRC
+
+This (equivalent) function is perhaps a touch too clever:
+
+#+BEGIN_SRC elm
+  removeEmpty : List String -> List String
+  removeEmpty =
+      List.filter (not << String.isEmpty)
+#+END_SRC
+
+You can also define an anonymous function using this syntax: ~\x -> x * 2~. The backslash represents the Greek letter [[https://en.wikipedia.org/wiki/Lambda_calculus][lambda]]. You can take multiple arguments too: ~\x y -> x + y~.
+*** Not covered
+- Type aliases
+- Tuples
+*** Exercises
+- Install Elm on your computer. Make sure you know how to build and run Elm programs.
+
+- https://ellie-app.com/5v5GwS5rKFra1 is a "problem set". You can solve it on Ellie or on your own computer, as you prefer.
+** Elm, part 2: the runtime and The Elm Architecture
+Start with a recap. Maybe some simple math stuff?
+*** A complete Elm app
+OK, let's look at some actually useful code: https://guide.elm-lang.org/architecture/buttons.html
+
+This is an example of a complete, if simple, Elm application. When defining an Elm application, you define a *model*, which contains the state of your entire application. Then, your application consists of:
+
+- An initial value for your model.
+- A "view function", which describes how to turn your state into HTML.
+- An "update function", which lets us respond to user actions. More about this in a second.
+
+The view function is responsible for producing HTML, which in Elm is represented using an ~Html msg~ type. We remember from earlier that ~msg~ is a variable. In this case, the ~Html~ type is the type of HTML that can generate messages. Messages are how user action is represented. We define our message type to represent all the different user actions we understand.
+
+In Elm, nothing can have side effects. How, then, can anything ever change? The answer is that the Elm environment manages some side effects for us. In particular, it keeps track of our model, and calls it when "something happens" -- in other words, for each message. The update function takes the current model and the message and produces the new model.
+
+This three-part structure (model, view, update) is called "The Elm Architecture", and is at the heart of all Elm applications.
+
+In this particular example, the model is just an ~Int~ (representing how many times the button has been clicked), and the possible actions are just ~Increment~ and ~Decrement~.
+*** A more complicated state
+A slightly more complicated, but still silly, little program: https://ellie-app.com/5pb8Ndv36Q4a1
+
+Read it over and note anything that doesn't make sense to you.
+**** Record types
+This example introduces record types. A record type looks like this:
+
+#+BEGIN_SRC elm
+  { name : String
+  , age : Int
+  , weight : Int
+  }
+#+END_SRC
+
+And a value of this type looks like this:
+
+#+BEGIN_SRC elm
+  { name = "Ethan", age = 34, weight = 190 }
+#+END_SRC
+
+A record is a type that has a fixed number of fields, each with a name and its own type. This type is "complete" on its own, so you can use it directly in type signatures if you want:
+
+#+BEGIN_SRC elm
+  birthday : { name : String, age : Int, weight : Int } -> Int
+  birthday person =
+      person.age + 1
+#+END_SRC
+
+However, usually it's a better idea to give the type a name using ~type alias~:
+
+#+BEGIN_SRC elm
+  type alias User =
+      { name : String
+      , age : Int
+      , weight : Int
+      }
+#+END_SRC
+
+Again, we use ~type alias~ instead of ~type~ because the record type is "complete" on its own.
+
+You can access fields of a record, as above, using ~person.age~ (or similar). You can also destructure it:
+
+#+BEGIN_SRC elm
+  birthday : User -> Int
+  birthday { age } =
+      age + 1
+#+END_SRC
+
+You don't need to destructure every field in the record. You can create a new record by "updating" an existing one:
+
+#+BEGIN_SRC elm
+  birthday : User -> User
+  birthday user =
+      { user | age = user.age + 1 }
+#+END_SRC
+
+Of course, this doesn't modify ~user~ (that would be a side effect!); it just creates a new record with most of the same fields.
+
+Now, normally a record type doesn't have/need a constructor. However, it's convenient to have one in certain situations (including decoding JSON), so Elm has a rule that if you have a type alias for a record type, it creates a constructor for it using the name of the alias. In this example, it creates ~User~ which is of type ~String -> Int -> Int -> User~. The first argument is the name, the second the age, etc. in order of declaration.
+**** Let
+There's another new thing here -- the ~let~ expression. These look like:
+
+#+BEGIN_SRC elm
+  let
+      var =
+          expression
+
+      -- ...
+  in
+      anotherExpression var
+#+END_SRC
+
+In other words, the ~let~ expression lets us define several variables for use in subsequent expressions. This is a pretty common feature of functional languages and helps us break up a really large function into smaller pieces.
+
+For unknown reasons, the Elm compiler will not let you create mutually-referential variables in a ~let~ expression. If you need to do this in 0.19, you have to make them module-level definitions.
+*** Forms
+This example uses a form to collect user input: https://guide.elm-lang.org/architecture/text_fields.html
+
+Read this one over too. There isn't any new syntax here, but there are a few new tricks about The Elm Architecture.
+**** Events.onInput
+We previously saw ~Events.onClick~, which we used on buttons, and causes that button (when clicked) to produce a message that we handle in ~update~. In terms of static types, ~Events.onClick~ takes a ~msg~ and produces an ~Attribute msg~, which is then given to ~button~ to produce an ~Html msg~. The ~msg~ lets us distinguish which button was clicked.
+
+~<input>~ elements are a little different from buttons. Buttons don't have any information in them, but inputs do. How can we access the information "in" the inputs? In JavaScript, we could access the ~.value~ of the ~<input>~ -- but we can't do that in Elm, because ~.value~ would have a different result every time we called it, which means it's impure. Instead, Elm sets things up so that the event -- in other words, the message -- carries the current value.
+
+~Events.onInput~ is used for handling a change in an ~<input>~ element. In the example, we see ~onInput Change~. Here, ~Change~ is a constructor. We see from the definition of the ~Msg~ type that ~Change~ takes a ~String~. This ~String~ is provided by Elm from the JavaScript event, and deconstructing the ~Change~ event is how we get the current value from the input.
+
+Once we have the input's value, we use it in the view as the input's ~value~. This may seem a little redundant -- after all, we just got the value from the input! -- but it's an essential part of The Elm Architecture. Because of this, we ensure that the HTML is a pure function of the model. This enables some neat tricks, such as time travel debugging. (Ellie supports this -- type some stuff in, click on the "Debug" tab, click on an earlier state, and then jump back to "Output".)
+
+Let's break down this construct into its pieces and their types. ~Change~ is not ~Msg~ but instead has type ~String -> Msg~. ~Events.onInput~ takes ~Change~, so it must be of type ~(String -> Msg) -> Attribute Msg~.
+*** Exercises
+Write an Elm program similar to the "text fields" example. It should allow the user to put in a name, a street address, a city, a state, and a zip code, and display it as a mailing address.
+
+- For now, just accept the state as another ~<input>~. (As an exercise, you can try to convert it to a ~<select>~.)
+
+- Although a zip code is written with digits, you should not try to treat it as a number. (In general, you should treat ~<input>~ as corresponding to a ~String~, because that is how to best represent user input.)
+** Elm part 3: advanced topics (~Cmd~, JSON)
+*** Side effects
+We said that because Elm is pure, it forbids side effects. And that's true as far as it goes. But, in the words of [[https://www.youtube.com/watch?v=iSmkqocn0oQ][Simon Peyton Jones]], a programming language with no side effects whatsoever is useless -- it can't read input nor produce output. In particular, there are lots of operations a web application will want to perform that embody side effects. A good example is making an HTTP request. That request can return different results at different times, which is a huge tip-off that it is impure.
+
+Elm offers a mechanism for performing these operations. Like a lot of things in Elm, this mechanism centers around a type. You can call (e.g.) ~Http.get~, which returns a ~Cmd msg~ (or sometimes ~Task~, which is related). If you define your program using ~Browser.element~ instead of ~Browser.sandbox~, you can return this ~Cmd~ from your ~update~ function. When you do this, the Elm runtime will perform the ~Cmd~. Each ~Cmd~ can report its result by producing a message, which is then handled (as normal) using your update function.
+
+Although we say that the Elm programming language is pure, what we mean is that you can't write a function that has a side effect. Instead what we do is write a pure function that returns a ~Cmd~, and will always return the same ~Cmd~ given the same output. The Elm "runtime" is responsible for actually performing this side effect. This may seem like sleight-of-hand but it's actually very important because it makes it obvious (and machine-enforceable) which parts of the program can (or cannot) have side effects.
+
+An example of making an HTTP request is at https://guide.elm-lang.org/effects/http.html.
+
+Up until now, we've defined types that correspond very closely to our data. For example, when you see ~Maybe Int~, you might think to yourself, "Oh, unless it's ~Nothing~, it has an ~Int~ inside it", and you know that you can pattern match to get the ~Int~ out. Some learners then see ~Cmd Int~, and reason, "Well, it has an ~Int~ inside it. How do I get the ~Int~ out?" You should *not* think "it has an ~Int~ inside it". There is no ~Int~ at all! Instead, a ~Cmd Int~ is sort of like a blueprint or recipe that, if followed, would *produce* an ~Int~. You can't get the ~Int~ out because it isn't there. The only things you can do with it are: return it from ~update~ (so that the Elm runtime will follow the recipe), or use the recipe in a bigger recipe (using e.g. ~Cmd.map~) to produce something else with that ~Int~.
+*** Demo
+We'll go through the effort of converting Evan's "text input" example into a ~Browser.element~ program.
+*** Parsing JSON
+In JavaScript, accessing a JSON object is super easy -- just data.user.name or whatever. However, it's generally best practice to define some kind of "schema" that you use to validate that incoming data is of the form you expect, to give you one specific place to handle invalid data and to simplify the rest of your code (since it can assume the data is valid).
+
+In Elm, this schema validation process is mandatory because you have to turn "untyped" JSON into your own strong types. This can be very frustrating for learners, and the library you use to do it can be a bit daunting, so we're going to spend some extra time on it.
+
+The Elm package for handling JSON is [[https://package.elm-lang.org/packages/elm/json/latest/][elm/json]]. It has two parts -- converting from Elm values to JSON structures ("encoding") and converting from JSON structures to Elm values ("decoding"). The package also defines a ~Value~ type, which represents a JSON value, but its details aren't exposed, so you can't pattern match on it directly.
+
+Instead, if you want to decode JSON, you define a ~Decoder~. A ~Decoder a~ is the type of something that takes a JSON value and produces ~a~ (or fails with an error message). There are some basic decoders already defined -- ~string : Decoder String~, ~bool : Decoder Bool~, ~int : Decoder Int~, ~float : Decoder Float~.
+
+You can also retrieve fields from a JSON object using ~field~ or ~at~.
+
+The real trick is in combining decoders. Let's say you want to decode users like this:
+
+#+BEGIN_SRC javascript
+  {
+      "name": "Ethan",
+      "location": "Brooklyn"
+  }
+#+END_SRC
+
+Into Elm structures like this:
+
+#+BEGIN_SRC elm
+  type alias User =
+      { name : String
+      , location : String
+      }
+#+END_SRC
+
+We can retrieve the ~name~ field using ~field "name" string~ and the ~location~ field using ~field "location" string~. We want to put them together. For this we use ~map2~:
+
+#+BEGIN_SRC elm
+  decodeUser : Decoder User
+  decodeUser =
+      map2 User
+          (field "name" string)
+          (field "location" string)
+#+END_SRC
+
+We can use any function of type ~String -> String -> User~, but we already have one in the ~User~ constructor created by the type alias.
+
+Note that we don't have to do anything special to indicate that we want the ~User~ to correspond to an object. If it weren't an object, the ~field~ decoders would fail.
+
+Writing these decoders is kind of tedious, but Evan thinks it's not that big a deal, and doesn't want to commit to any automatic mechanism just yet. There are some libraries that aim to streamline it a little bit: https://package.elm-lang.org/packages/NoRedInk/elm-json-decode-pipeline/latest/ is pretty common, and some people have tried to make it safer by writing both the encode and decode functions at the same time: https://package.elm-lang.org/packages/prozacchiwawa/elm-json-codec/latest/.
+*** Modeling
+There's an idea in the ML/Haskell/Elm communities which says "Make illegal states unrepresentable" (attributed to Yaron Minsky). This is a very powerful idea with ramifications throughout how you design your types/data structures.
+
+First, there are obvious cases. If you have a traffic light, there are only three legal states: red, yellow, and green. Representing this using a string is problematic because there are many more strings than the three we actually want. (This is one of Evan's examples, taken from [[https://guide.elm-lang.org/appendix/types_as_sets.html][Types as Sets]].)
+
+Another, subtler case is about overuse of ~Maybe~. ~Maybe~ is a good way to express "We cannot know in advance whether this will be present", but sometimes that just means "I personally don't know whether this will be present". There are sometimes alternatives that lead to a cleaner type system. One example is the ~Entity~ pattern. (This is an idea that I first saw in the Yesod framework for Haskell -- see https://www.yesodweb.com/book/persistent#persistent_insert.)
+
+Stuff in a relational database looks like a table, something like this:
+
+| Id | Name    | Location  |
+|  1 | Ethan   | Brooklyn  |
+|  2 | Mike    | Atlanta   |
+|  3 | Francis | Asheville |
+
+If we wanted to model this in Elm, we might come up with this:
+
+#+BEGIN_SRC elm
+  type alias User =
+      { id : Int
+      , name : String
+      , location : String
+      }
+#+END_SRC
+
+But what happens when we want to insert a new User? We would have to provide an ~id~, but we probably can't know off the top of our heads what ID is good. We really want to not provide an ID when we're inserting a new user, so that the database can give us the next available ID. But when we get a user back, we definitely want the ID to come back with it. So we might try something like this:
+
+#+BEGIN_SRC elm
+  type alias User =
+      { id : Maybe Int
+      , name : String
+      , location
+      }
+#+END_SRC
+
+i.e. make the ~id~ field a ~Maybe~. Lots of frameworks take this approach -- Django, for instance, would have you model ~User~ as a class, and a given ~User~ might have ~id~ of ~None~ if it had never been saved, and you would call ~user.save()~ to insert/update a user, and if the user hadn't been saved before, this would set its ~id~. But in Elm we can't update the user's ID in-place (that would be a side effect). Instead we can separate the ~User~ type into two types:
+
+#+BEGIN_SRC elm
+  type alias User =
+      { name : String
+      , location : String
+      }
+
+  type alias UserEntity =
+      { id : Int
+      , user : User
+      }
+#+END_SRC
+
+This way, we can create our ~User~ values without reference to how they would be stored in the database. These are what we would ~insert~. But at the same time, we can talk about ~UserEntity~ values, which *must* have been stored in the database. These two different types make it clear the cases where we will, or will not, have IDs.
+*** Exercise
+Remember the FCC "weather viewer" project? That project used the HTML5 Geolocation API, which we don't have access to in Elm. But let's use https://fcc-weather-api.glitch.me/ to get the current weather for latitude 40.65 and longitude -73.95 (i.e. somewhere in Brooklyn) and then display it.
