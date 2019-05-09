@@ -3711,7 +3711,7 @@ Because JavaScript, these iterators do not share the useful array methods we saw
 ** How to jump into a bigger codebase
 ** Elm, part 1: the language
 *** What is Elm?
-Elm is an interesting point in the universe of front-end tools. Elm is a programming language which has been designed, along with its tools and libraries, specialize in making front-end programming as pleasant as possible. Some aspects of this decision:
+Elm is an interesting point in the universe of front-end tools. Elm is a programming language which has been designed, along with its tools and libraries, to specialize in making front-end programming as pleasant as possible. Some aspects of this decision:
 
 - Whereas the trend is to make a programming language general-purpose -- for example, for JavaScript to "break out" of the browser and run in Node -- the Elm designers steadfastly refuse to even consider running Elm "on the back-end".
 
