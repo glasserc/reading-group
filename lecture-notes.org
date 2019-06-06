@@ -3928,6 +3928,16 @@ You can also define an anonymous function using this syntax: ~\x -> x * 2~. The 
 - Install Elm on your computer. Make sure you know how to build and run Elm programs.
 
 - https://ellie-app.com/5v5GwS5rKFra1 is a "problem set". You can solve it on Ellie or on your own computer, as you prefer.
+
+FIXME: maybe don't jump into rewriting ~map~. Instead spend more time defining types and constructors and pattern matching them.
+
+Things that frustrated learners:
+
+- if/then/else in Elm, especially nested if/then/else. Some learners analyze JS nested conditionals as if () { ... } else if () { ... } else {}, and there's no obvious "else if ... else" in Elm.
+
+- Difference between types and values. You may need a ~Maybe a~ somewhere, but you can't just put ~Maybe a~! In particular, constructors vs. types here is a bit of a leap. Constructors are *described* using types but *used* using values.
+
+- Need to emphasize the utility of constantly asking "What is the type of this thing?" No way to ask Elm to tell us the type unfortunately.
 ** Elm, part 2: the runtime and The Elm Architecture
 Start with a recap. Maybe some simple math stuff?
 *** A complete Elm app
