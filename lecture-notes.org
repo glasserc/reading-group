@@ -3709,7 +3709,7 @@ Because JavaScript, these iterators do not share the useful array methods we saw
 - You can sometimes build up chains of array methods rather than explicitly writing out a loop, which can make your code feel more declarative and elegant.
 - Maps are nice.
 ** How to jump into a bigger codebase
-** Elm, part 1: the language
+** Elm, part 1a: the language (intro)
 *** What is Elm?
 Elm is an interesting point in the universe of front-end tools. Elm is a programming language which has been designed, along with its tools and libraries, to specialize in making front-end programming as pleasant as possible. Some aspects of this decision:
 
@@ -3736,74 +3736,330 @@ In the interests of completion, we should also observe that:
 - The Elm ecosystem is still small. In JavaScript you can usually find a library on npm that will do what you want; often, nobody has written a library yet that will do it for Elm. The documentation isn't always everything it could be. Whereas Python had a thorough "language syntax reference", Elm doesn't. (There's https://github.com/izdi/elm-cheat-sheet, but it's unofficial, and oh yeah, it's for 0.18.)
 
 - In particular, Elm is largely the brainchild of a guy named Evan Czaplicki and his colleagues at a company called NoRedInk. They have some (let's say) unorthodox methods of running an open source project/community and some strong opinions about language design and programming style in general. As a result, the Elm community is still small, although very vocal. They tend to try to be friendly and helpful, and especially considerate of new learners, but they sometimes come off as condescending. In these notes, I will occasionally observe that "Evan writes X" or "Evan thinks X" -- this is not an endorsement, but merely a note about the current conditions in this community.
-*** What makes Elm different?
-Here's a look at some Elm code:
+*** What does Elm look like?
+Here is some Elm code.
 
 #+BEGIN_SRC elm
-  type IntList
-      = Nil
-      | Cons Int IntList
-
-  {-| Compute the length of a linked list.
-  -}
-  length : IntList -> Int
-  length l =
-      case l of
-          Nil ->
-              0
-
-          Cons _ remainder ->
-              -- This is the recursive case.
-              length remainder + 1
+  fib : Int -> Int
+  fib n =
+      if n == 0 || n == 1
+      then 1
+      -- Recursive case
+      else fib (n - 1) + fib (n - 2)
 #+END_SRC
 
-This is an implementation of a linked list and a ~length~ function for it. (This is just an example; Elm already has a built-in linked list type.)
+This is an implementation of the Fibonacci function. Note: this is not a complete Elm "program". (There's no entry point.) We're not going to learn the concepts we need to put the whole thing together for another few lessons. Exercises I provide will include a bunch of scaffolding that you won't be expected to understand. We can also go to https://ellie-app.com/new which contains a complete program and try to modify it. (We can try just copying and pasting our code in to see whether it will even compile, for example.)
 
-Let's break this down a little bit:
+Let's break this example down line-by-line:
 
-- ~type IntList~: defines a new *type*. In an object-oriented language like JavaScript or Python, we would typically define classes, but in a functional language, instead you define types. Built-in types include ~Int~, ~String~, and many others. Types have names which always begin with capital letters.
+- ~fib : Int -> Int~. This is a *type signature*. The ~:~ symbol is used to tell Elm what type something is, and can be read "has the type", like "~fib~ has the type ~Int -> Int~". ~Int~ is the type of integers. ~->~ is the type of functions -- ~a -> b~ means "a function that takes ~a~ as an argument and returns ~b~". So all together, this is saying "~fib~ is a function taking ~Int~ and returning ~Int~". Type signatures like this are often put above the thing they're describing. They help us describe our code's interface and help Elm verify the correctness of what we've written.
 
-- ~Nil~: the things after a type are the different variants. The first variant of the ~IntList~ type is called ~Nil~. This means that you can use ~Nil~ anywhere and it is a valid ~IntList~. Like types, variants must also have names that begin with a capital letter.
+- ~fib n =~. Elm code takes the form of a lot of "definitions" that are written in kind of a mathematical style. This is the definition of a function of one argument (~n~, on the left side of the equals sign). In other words, this is saying, "To compute ~fib~ of ~n~, do the following".
 
-- ~Cons Int IntList~: defines the other variant of ~IntList~ which is called ~Cons~. Unlike ~Nil~, ~Cons~ is not standalone. ~Cons~ contains an ~Int~ and a ~IntList~. ~Cons~ (and also ~Nil~, but it's more obvious here) is a *constructor*. Like constructors in object-oriented languages, constructors are functions that let us "produce" a member of a type. (In this example, if we call ~Cons~ with an ~Int~ and an ~IntList~, we will have a ~IntList~.) However, unlike constructors in object-oriented languages, which are responsible for setting up initial state of an object, here the constructor is almost inert.
+- ~if n == 0 || n == 1~. This is the first line of the function definition. *Elm, like Python and Haskell, are sensitive to whitespace*, so the implementation of the function is indented. This is also an ~if~ statement, checking for our base case. ~||~ works the way you would expect. The most basic builtin operators are listed at https://package.elm-lang.org/packages/elm/core/latest/Basics.
 
-- ~{-| .. -}~: this is a documentation comment which can serve to describe the thing following it (or sometimes, the whole module).
+- ~then 1~. This is the "body" of the ~if~ statement -- this is what we do if the condition is true. In this case, what we do is ~1~. This value will be the value of the ~if~ statement. More about this later.
 
-- ~length : IntList -> Int~. This is a *type signature*, which tells us the type of something. All top-level things in Elm must have a type signature. This type signature says "~length~ has the type (~:~) of a function (~->~) which takes ~IntList~ and produces ~Int~". Type signatures are always of the form ~thing : type~. The ~->~ arrow is how we describe functions. More about this later.
+- ~-- Recursive case~. Elm has two syntaxes for writing comments: single-line ones like this, and block comments that look like ~{- block comments -}~.
 
-- ~length l =~: begins the function definition. In Elm, function definitions look like mathematical equations. ~length~ is a function of one argument, so we see an argument before the equals sign, but you use the same syntax to define things that don't have arguments (or sometimes even for some that do). Note that ~length~ has a name that starts with a lowercase letter because it isn't a type.
+- ~else fib (n - 1) + fib (n - 2)~. This is the "else" branch of the ~if~ statement (what we do if the condition is false). In this case, what we will do is calculate ~fib (n - 1) + fib (n - 2)~. As with the ~then~ branch, if we choose this branch, this will be the value of the ~if~ statement.
 
-- ~case l of~. This is called pattern matching. This syntax says "check if ~l~ is any of these variants". It's kind of like a giant if-elseif-else statement, or a switch statement (in languages that have them).
+  - In Elm, to call a function, we just write the name of the function, then a space, then the arguments to the function. So to call ~fib~ with ~5~, we write ~fib 5~. Parentheses like ~fib(5)~ in JavaScript are not necessary.
 
-- ~Nil ->~: if ~l~ is ~Nil~, then we follow this branch and produce the value 0.
+  - However, in Elm, we say that *function application binds tightest*. What this means is that if we write ~fib n - 1~, Elm understands this as ~(fib n) - 1~ (the function application has precedence), and not what we actually want. We can use parentheses as usual to enforce order of operations.
 
-- ~Cons _ remainder ->~: on the other hand, if we have a ~Cons~, we want to do something different. In particular, we will want to use the ~IntList~ that was "contained" in the ~Cons~. By using pattern matching, we not only get to check what variant we have, but get to extract its data. This is the other side of the "constructor" coin in Elm -- not only is it used to create values, but also to deconstruct them.
+When you look at Elm code, you will notice first that the syntax is very different from other languages you've seen. (Instead of the C family languages, which inspired JavaScript syntax, Elm is more inspired by the ML family of languages, which includes Haskell.) But apart from this surface difference, there are two important structural differences that make Elm so different. Let's dig into those in a bit more depth.
+*** Static typing
+Elm is *statically typed*. This means that every variable has a type that can be determined before your code even runs. In Python, you can do this:
 
-- ~-- This is the recursive case.~. Elm supports single-line comments beginning with ~--~ and multi-line comments beginning with ~{-~ and ending with ~-}~. (Documentation comments, above, start with ~{-|~, with the ~|~ indicating "the thing below".)
+#+BEGIN_SRC python
+  def f(x):
+      return x + 1
 
-- ~length remainder + 1~: this is the recursive application of the function. In Elm, to call a function, you just write the name of the function followed by any arguments. Function application "binds tightly", so ~length remainder + 1~ means ~(length remainder) + 1~ and not ~length (remainder + 1)~.
+  print("OK, let's call f")
+  s = "hi"
+  f(s)
+#+END_SRC
 
-When you look at Elm code, you will notice first that the syntax is very different from other languages you've seen. (Instead of the C family languages, which inspired JavaScript syntax, Elm is more inspired by the ML family of languages, which includes Haskell.) But apart from this surface difference, there are two important structural differences that make Elm so different:
+This defines a function ~f~, which can be called with integers. Then, we print a little message, and then we call the function with a string. This is invalid, and we'll get an error message saying so -- *after* we've printed the message. In other words, this is a *runtime* error, because the language does not know what type ~s~ is until runtime. (Indeed, ~s~ can be an ~int~ later in the program.) This is what makes Python *dynamically typed*.
 
-- Elm is *statically typed*. This means that every variable has a type that can be determined before your code even runs. (Whereas in a dynamically-typed language, the contents of a variable are not really known until runtime.) Before your Elm code can run, it will be *typechecked*, which means each operation is examined to see whether it makes sense with the types that we have.
+In Elm, the equivalent function will not even run. Elm code is *compiled* before you can run it, and as part of the compilation process, your code will be *typechecked*, which means each operation is examined to see whether it makes sense with the types that we have. When typechecking, Elm will infer that ~f~ can only be called with integers, that ~s~ is a string, and thus calling ~f~ with ~s~ is an error.
 
-  Statically typed languages have the advantage that they can prevent a lot of the goofy stuff that happens in JavaScript. In JavaScript, if you try to add a number to an object, you get ~"[object Object]5"~. In Elm, you just can't do this; if you try, the compiler will yell at you and you won't be able to run your code. This also prevents stuff like ~undefined is not a function~ or ~could not access property foo of null~. Static typing has the *disadvantage* that you have to spend more time thinking about your program before you write any of it. You will have to figure out what types you need and how they fit together. This effort usually leads to a better program, but it can be frustrating and feel "slower" than just writing JavaScript.
+Statically typed languages have the advantage that they can prevent a lot of the goofy stuff that happens in JavaScript. In JavaScript, if you try to add a number to an object, you get ~"[object Object]5"~ . In Elm, you just can't do this; if you try, the compiler will yell at you and you won't be able to run your code. This also prevents stuff like ~undefined is not a function~ or ~could not access property foo of null~. This is one of Elm's big selling points: if your code compiles, it will run, with no mysterious or surprising breakages at runtime. (You can still have bugs, of course.)
 
-- Elm is a *pure* language, which means that no operation can have a side effect.[*] This means that when you call a function, the only thing it can do is return a value. This also means that you can't change a variable (doing so is, by definition, a side effect). It *also* means that if you call a function with the same arguments, you *must* get the same results. The advantage here is that no data is hidden and no code can change a variable somewhere without you knowing about it. The disadvantage is that a lot of things tend to rely on some kind of implicit state, and in Elm you have to always make that state explicit.
+The *disadvantage* of static typing is that you have to spend more time thinking about your program before you write any of it. You will have to figure out what types you need and how they fit together. This effort usually leads to a better program, but it can be frustrating and feel "slower" than just writing JavaScript.
+
+Elm is pretty smart and can figure out what types your functions have. However, it's traditional to put type signatures above each top-level definition. This helps prevent situations where you write a function that, while legal, doesn't do what you intend.
+*** Purity
+Elm is a *pure* language, which means that no operation can have a side effect.[*] This means that when you call a function, the only thing it can do is return a value.
 
 [*] Wikipedia instead describes languages as "purely functional", in which operations are expressed as mathematical functions, with their output only depending on their arguments, or alternately by forbidding mutable data. This might be more correct from a theoretical standpoint, or maybe it's saying the equivalent thing.
 
+This has a lot of implications! To start with, you can never change a variable -- doing so is, by definition, a side effect. Doing ~x = 5; x = 6~ is invalid.
+
+Because you can never change a variable, there's also no real "loop" operations -- no ~for~, no ~while~. Instead, you have to write your own recursive functions (or use helpers like ~fold~).
+
+Because side effects are impossible, the only thing a function can do is return a value. You noticed before that there's no ~return~ statement in Elm -- there's no real need for it.
+
+I said that there's no ~return~ statement -- in fact, there aren't really even statements at all! No operation can have a side effect, so every operation must have a value, which means the language only has expressions. Even ~if~ statements have values, which we saw in the ~fib~ function above -- if the condition is true, we use the value of the ~then~ branch; otherwise, we use the value of the ~else~ branch.
+
+Finally, purity means that if you call a function with the same arguments, you *must* get the same results. The advantage here is that no data is hidden and no code can change a variable somewhere without you knowing about it. The disadvantage is that a lot of things tend to rely on some kind of implicit state, and in Elm you have to always make that state explicit.
+
 The upshot here is that some things that seem like they would be easy in JavaScript are suddenly going to seem very hard. (For example, getting a random number is a simple function call in JavaScript, but in Elm it's more complicated.) The good news is that some things that are hard in JavaScript are simpler or at least more pleasant in Elm. But either way, it's going to be jarring. When this happens, just remember that Ethan said it was OK.
+*** Elm syntax cheat sheet
+We've seen the syntax for defining a function -- type signature, then something ~func arg1 arg2 = body~, where ~arg1~ and ~arg2~ are the function arguments, and ~body~ is an expression whose value will be the return value of the function. It's also common to put a documentation comment above the function, which describes what the function does: ~{-| Example documentation comment. -}~
 
-You'll note that there's no ~return~ statement in Elm. There aren't really even statements at all! No operation can have a side effect, so every operation must have a value, which means the language only has expressions. Even ~if~ statements have values -- you could do ~xIsBig = if x > 5 then True else False~.
+We've also seen some operators. ~+~, ~-~, ~*~ all do what you would expect. ~/~ does floating-point division. ~//~ does integer division, discarding remainder. ~||~ and ~&&~ do logical operations. Comparisons are done with ~==~, ~/=~, ~<~, ~>~, ~<=~, ~>=~. Strings are concatenated using ~++~.
 
-There's also no real "loop" operations -- no ~for~, no ~while~. Instead, you have to write your own recursive functions (or use helpers like ~fold~).
+We've seen ~if~ statements: ~if condition then body else elsebody~. Elm doesn't have special syntax for "chained" or "nested" if statements, so there's no special ~else if~ syntax. However, you can still nest if statements in the usual way:
 
-Vocabulary:
+#+BEGIN_SRC elm
+  if c1
+  then if c2
+       then b2
+       else e2
+  else if c3
+       then b3
+       else e3
+#+END_SRC
 
-- We no longer have *classes*; now we have *types*. Instead of *objects* of classes, we have *values* of those types.
+You can also define local variables within a function if you like using ~let ... in~. Example:
 
-- We still have *constructors*, although they work a little differently.
+#+BEGIN_SRC elm
+  let
+      number = 14
+  in
+  number - 4
+#+END_SRC
+
+This can be useful in larger functions, or if you need to re-use a smaller expression, but it's also pretty common not to even bother with helper variables and just use expressions directly. Remember that you *cannot redefine variables*.
+*** Homework
+- Install Elm on your computer. Follow the instructions at https://guide.elm-lang.org/install.html . This will show you how to run the elm REPL, which lets you run individual commands. It will also show you how to use ~elm reactor~ and ~elm make~ to compile and run Elm programs that you have on your computer. This may be easier than using Ellie. Make sure you know how to build and run Elm programs.
+
+- https://ellie-app.com/5KWm4SVfG9na1 is a "problem set". You can solve it on Ellie or on your own computer, as you prefer.
+** Elm, part 1b: types
+We saw last week that Elm is a statically-typed language. This static type system is pervasive in Elm and a major part of the Elm paradigm. It's very common, when writing Elm code, to not think about a variable's value, but just its type, and often that type serves as a guide for what operations are available for it. This week we'll look more at the type system itself and how to use it.
+
+What is a type? A type is a set of values. When we say that something ~x~ is of type ~Int~, what we mean is that ~x~ can have the values ~1~, ~2~, ~3~ and so on, but cannot have the values ~3.14~, ~False~, or ~"butterscotch"~. Giving types to things makes it possible for Elm to verify that we are using them in ways that are correct. If Elm detects that something is being used inconsistently (we try to add something to it although it isn't a number, or we try to use it as both a number and a string), we will get a compiler error and be unable to run our program. If our code compiles successfully, it doesn't necessarily mean that we don't have any bugs, but it's a good start.
+
+In Elm, we use the ~:~ symbol to indicate the type of something. Most types start with a capital letter. Types operate at a different "level" than values. We can't say ~x = Int~ because ~x~ is a variable and can only hold a single value, whereas ~Int~ is the "class" of a whole bunch of values. Similarly ~f Int~ and ~Int + 5~ don't make any sense.
+*** Basic types
+We've already seen some of the builtin types: ~Int~, ~String~, ~Float~, ~Bool~. These should mostly be familiar from other languages. Elm also has ~Char~, which is the type of a single "letter".
+
+#+BEGIN_SRC elm
+  x : Int
+  x = 5
+
+  name : String
+  name = "Ethan"
+
+  e : Float
+  e = 2.71828
+
+  space : Char
+  space = ' '
+#+END_SRC
+*** Function types
+Last week we saw that functions also have a type. A function that takes an ~Int~ and returns a ~String~ has the type ~Int -> String~.
+
+Functions can take multiple arguments. For example, if a function ~f~ takes an ~Int~ and a ~Char~ and returns a ~String~, we write its type ~f : Int -> Char -> String~. This syntax may look a little strange -- it almost looks like, instead of one function of two arguments, there's two functions of one argument! And the reason for this is that actually, it is. This enables a feature called "partial function application", which we'll see in more depth later.
+
+#+BEGIN_SRC elm
+  double : Int -> Int
+  double x = x * 2
+
+  greet : String -> String -> String
+  greet firstName lastName =
+      "Hello, " ++ firstName ++ " " ++ lastName ++ "!"
+
+  -- Anonymous functions ("lambdas") are also available in Elm. They use
+  -- the backslash "\" character, which is supposed to look a little
+  -- like the Greek letter lambda.
+  double : Int -> Int
+  double = \x -> x * 2
+#+END_SRC
+*** Lists
+Elm has a "sequence" type which is called ~List~. Although in many languages, the name for this kind of "sequence of things" is ~Array~, in Elm we use ~List~. Note that Elm also has an ~Array~ type that we won't talk about.
+
+#+BEGIN_SRC elm
+  numbers : List Int
+  numbers = [ 12, 24, 36 ]
+
+  names : List String
+  names = [ "Ethan", "Mike", "Alex" ]
+#+END_SRC
+
+We write a list value using square brackets: ~[ 1, 2, 3 ]~. We write the type of lists using the name ~List~: the previous list is type ~List Int~.
+
+In Elm, a ~List~ is homogeneous -- all elements in it must be of the same type. You can't write ~[4, "Ethan"]~ -- this list is invalid.
+
+We see that ~List~ is not a "complete" type by itself. A list is a list "of" something. A list of ~Int~ has type ~List Int~. If you've ever looked at C# or Java, this may be familiar to you -- in Java, a list type would be ~List<T>~, and we would say it was "generic" over the type ~T~. In Elm we don't use those angle brackets, but the idea is the same.
+*** Tuples
+Sometimes you just want to pair up two (or three, but anyhow a small, fixed number) of things. To do this, you can use a tuple.
+
+#+BEGIN_SRC elm
+  red : ( Int, Int, Int )
+  red = ( 255, 0, 0 )
+
+  englishGrade : ( String, Int )
+  englishGrade = ( "Professor Quinlan", 85 )
+
+  mathGrade : ( String, Int )
+  mathGrade = ( "Professor Feigenbaum", 92 )
+
+  grades : List ( String, Int )
+  grades =
+      [ mathGrade
+      , englishGrade
+      , ( "Professor Ingalls", 88 )
+      ]
+#+END_SRC
+
+We write the types of tuples using parentheses, so ~( Int, Int )~ is the type of a tuple with an ~Int~ and an ~Int~. We also write the tuple values themselves using parentheses, so an example of the previous type is ~( 2, 4 )~.
+
+Tuples serve a different role than lists. Lists are good when you have a bunch of elements which are all the same type, and you don't know how many you will have. Tuples are good for when you have a fixed number of things and they aren't necessarily the same type. They're a first step towards defining a new type. In the above example, I'm sort of defining a "color" type which is a RGB triple, and I'm sort of defining grades as ~( professor name, grade )~ pairs.
+
+Tuples are real types and so can be used in any place other types can be -- as the element of a list or as the return type of a function, for example. Using a tuple this way is one way to get around the fact that functions can only return one value.
+
+A tuple is a good fit for when defining a type for something feels too heavyweight, but if you find yourself re-using a specific tuple, you should probably define a type for it. Anything a tuple can do, you can do with a record type (below).
+*** Records
+Records are sort of like classes or structs from other languages. They group a bunch of fields together in a single value which includes all of them. In the functional community we tend to use the word "types" instead of "classes" because classes have methods "attached" to them, whereas types are free floating and functions using them can be defined anywhere.
+
+The most common use is something like this:
+
+#+BEGIN_SRC elm
+  type alias User =
+      { id : Int
+      , name : String
+      , username : String
+      , email : String
+      }
+#+END_SRC
+
+This defines a ~User~ type which is a combination of an ~Int~ (the ~id~) and three ~String~ (the ~name~, ~username~, and ~email~). You can then "create" a ~User~ value like this:
+
+#+BEGIN_SRC elm
+  ethan =
+      { id = 1,
+      , name = "Ethan"
+      , username = "glasserc"
+      , email = "ethan@example.com"
+      }
+#+END_SRC
+
+You can access the fields of a record using dot syntax. ~ethan.name~ is ~"Ethan"~.
+
+Elm also allows you to write ~.name~ -- this creates a function ~User -> String~ which extracts the ~name~ field from a ~User~. (You can also pattern-match individual fields out of a record. More about pattern-matching later.)
+
+This "common" use case is actually the combination of two Elm features. First, record types. You can create a record type without giving it a name, sort of the same way you create a random tuple:
+
+#+BEGIN_SRC elm
+  greetUser : { id : Int, name : String, username : String, email : String } -> String
+  greetUser u = "Hello, " ++ u.name ++ " <" ++ u.email ++ ">"
+#+END_SRC
+
+This is kind of rare -- records are usually complicated enough and meaningful enough to give names to -- but it does happen. For example, https://package.elm-lang.org/packages/elm/http/latest/Http uses these kinds of "anonymous" records in its function arguments.
+
+The other feature is type aliases:
+*** Aliases
+Elm lets you define a type alias. This lets you give a new name to a commonly-used type. That might be a type like ~Int~ or ~String~ which already exists or it might be a type built out of other types like tuples or records. An example:
+
+#+BEGIN_SRC elm
+  type alias RGB = ( Int, Int, Int )
+
+  saturation : RGB -> Float
+  saturation color = -- ...
+#+END_SRC
+
+This kind of type is very simple -- whenever the compiler sees ~RGB~, it immediately replaces it with ~( Int, Int, Int )~. There's no difference as far as it's concerned. If you have a function that takes ~( Int, Int, Int )~, it also takes ~RGB~. If you define ~type alias Name = String~, then the compiler won't prevent you from passing a ~String~ to a function that needs a ~Name~, or vice versa. After compilation, the type alias completely disappears.
+
+One implication of "disappearing" type aliases is that you can't have a recursive one. Consider the following structure:
+
+#+BEGIN_SRC elm
+  type alias List = ( Int, List )
+#+END_SRC
+
+The compiler knows it can replace ~List~ with ~( Int, List )~. But wait, there's a ~List~ right there in the tuple! So it tries to replace that and gets: ~( Int, ( Int, List ))~. But wait, there's still ~List~! Trying to expand this alias leads to an infinite type, which (among other problems) doesn't fit in computer memory, so compilation is impossible.
+
+Besides records, you can use this kind of alias to tentatively introduce types without a lot of fuss. For example, you might know you need a type for money that is more complicated than floating-point numbers. Until you have the time/information to implement that, you can ~type alias Money = Float~. This kind of type alias is lightweight but it can feel a little "unsafe". (It's "safe" for records because the real safety comes from the definition of the record type, not the alias.)
+
+As a special feature, if you define an alias to a record type, Elm also defines a function with the same name as the alias which functions something like a constructor. For example, in the ~User~ example above, Elm will define a function ~User : Int -> String -> String -> String -> User~. This is kind of like a "constructor" from the enum section (below) -- it helps you create instances of the type. This only happens for type aliases for records!
+*** "Custom types" (a.k.a. tagged unions or ADTs)
+We said above that types are a name given to a set of possible values. The ~type~ declaration in Elm is the way you create this set of possible values.
+
+#+BEGIN_SRC elm
+  type Color
+      = Red
+      | Green
+      | Blue
+#+END_SRC
+
+This declaration creates a type called ~Color~. There are three "variants" of ~Color~. Each variant has a "constructor" -- ~Red~, ~Green~, and ~Blue~. These constructors (which have to start with a capital letter) are how you create ~Color~ values. So you can do:
+
+#+BEGIN_SRC elm
+  skyColor : Color
+  skyColor = Blue
+#+END_SRC
+
+Your type can have as many variants as you want. ~Bool~ is just a type with two variants (~True~ and ~False~). It's even possible to have types that have zero values! It's called https://package.elm-lang.org/packages/elm/core/latest/Basics#Never and I don't think I've ever really used it in real code.
+
+Not only that, but each variant can store additional data, and that data can be different for different variants. An example:
+
+#+BEGIN_SRC elm
+  type SearchQuery
+      = SearchByName String
+      | SearchById Int
+
+  query : SearchQuery
+  query = SearchByName "Ethan"
+#+END_SRC
+
+Unlike records, the data associated with variants is not identified by name -- only by position. (For this reason, it can be helpful to have both "tagged union" types as well as records.) It's not possible to directly get the data out of a ~SearchQuery~ because a ~SearchQuery~ could be either a ~SearchByName~ or a ~SearchById~. Instead, we can use pattern matching:
+
+#+BEGIN_SRC elm
+  searchString : SearchQuery -> String
+  searchString q =
+      case q of
+          SearchByName s ->
+              -- Now we have a new variable, s, which corresponds to the
+              -- string that was given originally to the SearchByName
+              s
+
+          SearchById i ->
+              -- And here we have i which corresponds to the Int that
+              -- was given to SearchById
+              String.fromInt i
+
+  -- It's also possible to disregard the associated data if you don't
+  -- need it
+  searchIsByName : SearchQuery -> Bool
+  searchIsByName q =
+      case q of
+          SearchByName _ ->
+              True
+
+          SearchById _ ->
+              False
+#+END_SRC
+
+Pattern matching works by letting us check which variant the value is and, at the same time, extract the data from it. We "deconstruct" the data using the same constructors we used to create it. Remember that the space of types and the space of values are different -- in the type declaration, we said ~SearchByName~ is followed by a ~String~, but in the pattern matching, we extract a variable (not a type).
+
+We said that type aliases "disappear" after compilation. The ~type~ declaration in Elm defines a type that does not disappear. Each constructed value is represented as a JavaScript object which indicates which constructor was used for it and any additional data it has. Here's an example of a linked list and a length function for it:
+
+#+BEGIN_SRC elm
+  type IntList
+      = Cons Int IntList
+      | Nil
+
+  length : IntList -> Int
+  length l =
+      case l of
+          Cons _ remainder ->
+              length remainder + 1
+
+          Nil ->
+              0
+#+END_SRC
 *** Polymorphism and parametricity
 Some functions have a type that is more complicated. For example, consider the *identity function*, ~identity x = x~. What is the type of this function? It can take any type and returns that type. Writing ~Int -> Int~ is too restrictive -- it's simultaneously ~String -> String~.
 
@@ -3819,13 +4075,11 @@ The same principles apply when we define types. Above, we defined an ~IntList~ t
       | Cons a (MyList a)
 #+END_SRC
 
-Now, ~MyList a~ is the type of a list that holds ~a~ elements. ~MyList Int~ is the type of lists that hold ~Ints~, etc. ~MyList~ by itself is incomplete -- you need to provide another type for it to "work".
+Now, ~MyList a~ is the type of a list that holds ~a~ elements. ~MyList Int~ is the type of lists that hold ~Ints~, etc. ~MyList~ by itself is incomplete -- you need to provide another type for it to "work". Indeed, this is exactly how the built-in ~List~ type works!
 
 This idea is pretty funky and you may stumble over it the first few times you use it.
 *** Some useful types
-Here are some examples of this kind of generic type. First, we've already seen that lists are generic -- the list type in Elm is called ~List~.
-
-There's a type called ~Maybe~. It's defined like this:
+Here are some other examples of this kind of generic type. There's a type called ~Maybe~. It's defined like this:
 
 #+BEGIN_SRC elm
   type Maybe a
@@ -3849,35 +4103,151 @@ This lets you represent "failure with a reason".
 
 These types are very handy and appear all over the place. There's also a bunch of utility methods to help when working with them: https://package.elm-lang.org/packages/elm/core/latest/Maybe and https://package.elm-lang.org/packages/elm/core/latest/Result.
 
-N.B. It's possible to overuse these. If you find yourself using a type with ~Maybe~ s nested in ~Result~ s or the other way around, that's a good clue that you might want to define a new type. It's also possible to lean on ~Maybe~ as a crutch instead of correctly modeling when you will have (or not have) the related value. More about this later.
+N.B. It's possible to overuse these. If you find yourself using a type with ~Maybe~ s nested in ~Result~ s or the other way around, that's a good clue that you might want to define a new type. It's also possible to lean on ~Maybe~ as a crutch instead of correctly modeling when you will have (or not have) the related value. (I have more to say about this but not sure when. Remind me!)
 *** Partial function application
-Here is how you define a function of more than one argument in Elm:
+We said earlier that a function of two arguments is written like this:
 
 #+BEGIN_SRC elm
-  push : Int -> IntList -> IntList
-  push a l =
-      Cons a l
+  divideBy : Int -> Int -> Int
+  divideBy y x =
+      x // y
 #+END_SRC
 
-(This function is completely useless, because you could just use ~Cons~ directly, but we'll use it to demonstrate some stuff about syntax.)
+This example defines a function called ~divideBy~ which takes two numbers and divides the second by the first. So ~divideBy 3 12~ is ~4~.
 
-The syntax for type signatures with multiple arguments may look a little strange: ~Int -> IntList -> IntList~. It almost looks like, instead of one function of two arguments, there's two functions of one argument! And the reason for this is that actually, it is. In Elm (and many related languages) there's the concept of "partial function application", which means you can provide e.g. only one of the two arguments, and in so doing, create a new function. So although you could do this:
+In Elm (and many related languages) there's the concept of "partial function application", which means you can provide e.g. only one of the two arguments, and in so doing, create a new function. (Sometimes this is also called "currying", although technically, currying is something else; everyone just uses the word wrong.) So although you could do this:
 
 #+BEGIN_SRC elm
-  push5 : IntList -> IntList
-  push5 l =
-      push 5 l
+  halve : Int -> Int
+  halve x =
+      divideBy 2 x
 #+END_SRC
 
 You can just do this:
 
 #+BEGIN_SRC elm
-  push5 : IntList -> IntList
-  push5 =
-      push 5
+  halve : IntList -> IntList
+  halve =
+      divideBy 2 x
 #+END_SRC
 
-Sometimes this is also called "currying" (although technically, currying is something else; everyone just uses the word wrong). So in a real sense, ~push~ is a function that takes one argument, and which returns a function that takes the second argument. Elm does this for us automatically.
+Why is this useful? It makes it easier to define ad hoc, on-the-fly sorts of functions. For example, in JavaScript, it's common to use ~map~ to perform an operation on all elements of a list:
+
+#+BEGIN_SRC javascript
+  let arr = [12, 2, 56].map(function(x) {
+      return divideBy(2, x);
+  });
+
+  // There's also Function.prototype.bind to make this sort of thing
+  // easier, but, because JavaScript, it kind of makes it uglier.
+  let halve = divideBy.bind(null, 2);
+  let arr = [12, 2, 56].map(halve);
+#+END_SRC
+
+~map~ takes a function, and a common way to provide this function is to define an anonymous function (a "lambda") right there. But it's quite tedious when all we want to do is re-use a given function with some arguments already fixed. This is so common in Elm that we don't have to do anything special:
+
+#+BEGIN_SRC elm
+  halveAll : List Int -> List Int
+  halveAll l =
+      List.map (divideBy 2) l
+
+  -- or, equivalently
+  halveAll : List Int -> List Int
+  halveAll =
+      List.map (divideBy 2)
+#+END_SRC
+
+By calling ~divideBy~ with just one argument, we get a function accepts the second argument and uses it along with the "remembered" first argument. Elm creates this second function for us automatically.
+
+This is why the type signature is written ~divideBy : Int -> Int -> Int~. In a real sense, ~divideBy~ is a function that takes one argument, and which returns a function that takes the second argument.
+*** Type inference
+We've said that Elm *typechecks* our programs while compiling them. What does this mean? How does it do that? Knowing this can be helpful when trying to figure out why some code generated an error, and it can help guide your thinking when you're trying to write a solution.
+
+Let's imagine we have some Elm code like this:
+
+#+BEGIN_SRC elm
+  type alias User =
+      { name : String
+      , team : Color
+      }
+
+  colorName : Color -> String
+  colorName = -- ....
+
+
+  nameIsLegal : String -> Bool
+  nameIsLegal = -- ...
+
+
+  describeUser u =
+      if nameIsLegal u.name
+      then "User " ++ u.name ++ " with color " ++ u.color
+      else Nothing
+#+END_SRC
+
+Let's say Elm is trying to typecheck ~describeUser~. What it does is it writes down as many facts as it can infer from this code. For example, ~describeUser~ is clearly a function of one argument. The return type of ~describeUser~ is going to be the return type of the ~if~ statement. An ~if~ statement has a condition which has to be ~Bool~ and the return type which is the same in both ~then~ and ~else~ cases. And so on. So it might put together something that looks like this: (Note: not real Elm code)
+
+#+BEGIN_SRC elm
+  describeUser : d1 -> d2
+  if : Bool -> t -> e
+  t = e
+  d2 = t = e
+  (nameIsLegal u.name) = Bool
+  (++) : String -> String -> String
+  "User " : String
+  " with color " : String
+  t = String    -- it's the output of the ++
+#+END_SRC
+
+Already Elm can tell quite a lot about our code! If there's no contradictions so far, it has to typecheck each subexpression. This can generate more facts. For example, ~nameIsLegal u.name~ means we're calling ~nameIsLegal~ with a single argument ~u.name~. In order for that to be OK, ~nameIsLegal~ has to be a function, and it has to take at least one argument, and the first argument has to be the same type as ~u.name~. Well actually we don't know what type ~u.name~ is because ~u~ doesn't have a type yet. But if we're doing ~u.name~, then ~u~ must be a record with a ~name~ field. So we keep writing down facts and trying to put them together with other facts:
+
+#+BEGIN_SRC elm
+  nameIsLegal : n1 -> Bool
+  u : d1
+  d1 = { name : n1, ....? }
+  nameIsLegal : String -> Bool   -- from the type signatures I wrote above
+  d1 = { name : String, ....? }
+  ("User " ++ u.name) : String   -- this is OK because u.name is a String
+  ("User " ++ u.name ++ " with color ") : String
+  ("User " ++ u.name ++ " with color " ++ u.color) : String
+  -- This must mean:
+  u.color : String   -- which is probably not what we wanted!
+  d1 : { name : String, color : String }   -- wait, that's not User!
+  describeUser : { name : String, color : String } -> d2
+#+END_SRC
+
+So this part successfully typechecked, and Elm inferred something (although not the thing we had in mind). But what about the return type of ~describeUser~? Well, it should be the return type of the ~if~. The condition part of the ~if~ checked out, but the ~then~ seems to have type ~String~. What about the ~else~ part? We wrote ~else Nothing~. ~Nothing~ is a constructor for ~Maybe a~. (We don't know what the ~a~ is yet -- we don't have enough to go on.) Elm knows that the ~if~ has to have the same types for the ~then~ and the ~else~, and they're clearly already different, so it will reject this code.
+
+The name for this algorithm is [[https://en.wikipedia.org/wiki/Unification_(computer_science)][unification]], and the type inference algorithm is called [[https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner][Hindley-Milner]]. You don't have to know a lot about it but it can be helpful to try to simulate it by hand sometimes when trying to sort out a tricky compiler error.
+
+Here are some built-in rules for generating facts:
+
+- When typechecking a function, the arguments of the function must have the types indicated by the corresponding types in the function signature.
+
+- If a function ~f~ is being called with an argument ~x~, then ~f~ must be a function and its first argument must be the same as the type of ~x~.
+
+- If we have ~case x of~, then each alternative constructor must be the same type as ~x~.
+
+- Each matched constructor can introduce new variables. For example ~Cons d remainder~ creates the variables ~d~ and ~remainder~. Their types correspond to the types in the constructor declaration in the type definition.
+
+- If we have ~if c then t else e~, then ~c~ must have type ~Bool~; ~t~ and ~e~ must have the same type; the type of the if statement must be the type of ~t~ / ~e~.
+
+- If we have ~let x = z in e~, then every time we see ~x~ in ~e~, it must have the type of ~z~.
+
+- If we have a list literal like ~[ a, b, c ]~, then ~a~, ~b~ and ~c~ must have the same types (let's call it ~A~), and the type of the list is ~List A~.
+
+- If we see ~x.field~, then ~x~ must be a record, and it must have a field named ~field~, and the type of ~x.field~ is the type of the field in the record type.
+
+The Elm REPL can sometimes be helpful for asking about what type a certain smaller expression is. In the repl, if you type an expression like ~modBy 12~, it will reply ~<function> : Int -> Int~.
+*** Vocabulary notes
+- We no longer have *classes*; now we have *types*. Instead of *objects* of classes, we have *values* of those types.
+
+- We still have *constructors*, although they work a little differently.
+
+https://www.destroyallsoftware.com/compendium/types?share_key=baf6b67369843fa2 is a good link to discuss different kinds of type systems if that's interesting to you.
+*** Exercises
+https://ellie-app.com/5PtVRcXHyJqa1
+** Elm: garbage
 *** More operators
 We said above that function application binds tightest. There are some fun operators that you can use instead of writing oodles of parentheses. ~|>~ is sometimes called a "pipe" -- it lets you feed arguments through functions:
 
@@ -3921,23 +4291,14 @@ This (equivalent) function is perhaps a touch too clever:
 #+END_SRC
 
 You can also define an anonymous function using this syntax: ~\x -> x * 2~. The backslash represents the Greek letter [[https://en.wikipedia.org/wiki/Lambda_calculus][lambda]]. You can take multiple arguments too: ~\x y -> x + y~.
-*** Not covered
-- Type aliases
-- Tuples
 *** Exercises
-- Install Elm on your computer. Make sure you know how to build and run Elm programs.
-
-- https://ellie-app.com/5v5GwS5rKFra1 is a "problem set". You can solve it on Ellie or on your own computer, as you prefer.
-
-FIXME: maybe don't jump into rewriting ~map~. Instead spend more time defining types and constructors and pattern matching them.
-
 Things that frustrated learners:
 
 - if/then/else in Elm, especially nested if/then/else. Some learners analyze JS nested conditionals as if () { ... } else if () { ... } else {}, and there's no obvious "else if ... else" in Elm.
 
 - Difference between types and values. You may need a ~Maybe a~ somewhere, but you can't just put ~Maybe a~! In particular, constructors vs. types here is a bit of a leap. Constructors are *described* using types but *used* using values.
 
-- Need to emphasize the utility of constantly asking "What is the type of this thing?" No way to ask Elm to tell us the type unfortunately.
+- Need to emphasize the utility of constantly asking "What is the type of this thing?" Can ask type at repl, although only for "builtin" stuff.
 ** Elm, part 2: the runtime and The Elm Architecture
 Start with a recap. Maybe some simple math stuff?
 *** A complete Elm app
