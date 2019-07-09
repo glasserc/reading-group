@@ -4248,6 +4248,11 @@ https://www.destroyallsoftware.com/compendium/types?share_key=baf6b67369843fa2 i
 *** Exercises
 https://ellie-app.com/5PtVRcXHyJqa1
 ** Elm: garbage
+*** Imports
+Type aliases get imported by themselves -- no constructors. (At some point the Elm compiler gave really shitty errors if you did this.)
+With types, you can import/export either the type by itself, or the type with constructors. (You can't import only some constructors.)
+*** Updating records
+{ foo | ... }. Doesn't support { model.foo | ... }
 *** More operators
 We said above that function application binds tightest. There are some fun operators that you can use instead of writing oodles of parentheses. ~|>~ is sometimes called a "pipe" -- it lets you feed arguments through functions:
 
@@ -4291,6 +4296,7 @@ This (equivalent) function is perhaps a touch too clever:
 #+END_SRC
 
 You can also define an anonymous function using this syntax: ~\x -> x * 2~. The backslash represents the Greek letter [[https://en.wikipedia.org/wiki/Lambda_calculus][lambda]]. You can take multiple arguments too: ~\x y -> x + y~.
+*** Entity types (to avoid using Maybe)
 *** Exercises
 Things that frustrated learners:
 
