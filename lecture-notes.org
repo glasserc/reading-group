@@ -4306,7 +4306,7 @@ Things that frustrated learners:
 
 - Need to emphasize the utility of constantly asking "What is the type of this thing?" Can ask type at repl, although only for "builtin" stuff.
 ** Elm, part 2: the runtime and The Elm Architecture
-Start with a recap. Maybe some simple math stuff?
+So far we've learned about the Elm language and how to write functions and type signatures. But up till now, there's always been some scaffolding that we haven't talked about -- we haven't seen a complete program yet. This is the first time we'll put everything together and see a little bit about how a real Elm program works. This is called "The Elm Architecture", and it may remind you a little bit of how things work in React.
 *** A complete Elm app
 OK, let's look at some actually useful code: https://guide.elm-lang.org/architecture/buttons.html
 
@@ -4318,7 +4318,7 @@ This is an example of a complete, if simple, Elm application. When defining an E
 
 The view function is responsible for producing HTML, which in Elm is represented using an ~Html msg~ type. We remember from earlier that ~msg~ is a variable. In this case, the ~Html~ type is the type of HTML that can generate messages. Messages are how user action is represented. We define our message type to represent all the different user actions we understand.
 
-In Elm, nothing can have side effects. How, then, can anything ever change? The answer is that the Elm environment manages some side effects for us. In particular, it keeps track of our model, and calls it when "something happens" -- in other words, for each message. The update function takes the current model and the message and produces the new model.
+In Elm, nothing can have side effects. How, then, can anything ever change? The answer is that the Elm environment manages some side effects for us. In particular, it keeps track of our model, and lets us produce a new one when "something happens" -- in other words, for each message. This done by writing an ~update~ function, which takes the current model and the message and produces the new model.
 
 This three-part structure (model, view, update) is called "The Elm Architecture", and is at the heart of all Elm applications.
 
@@ -4328,22 +4328,7 @@ A slightly more complicated, but still silly, little program: https://ellie-app.
 
 Read it over and note anything that doesn't make sense to you.
 **** Record types
-This example introduces record types. A record type looks like this:
-
-#+BEGIN_SRC elm
-  { name : String
-  , age : Int
-  , weight : Int
-  }
-#+END_SRC
-
-And a value of this type looks like this:
-
-#+BEGIN_SRC elm
-  { name = "Ethan", age = 34, weight = 190 }
-#+END_SRC
-
-A record is a type that has a fixed number of fields, each with a name and its own type. This type is "complete" on its own, so you can use it directly in type signatures if you want:
+This example makes use of record types, which we've seen before. As a reminder, a record is a type that has a fixed number of fields, each with a name and its own type. This type is "complete" on its own, so you can use it directly in type signatures if you want:
 
 #+BEGIN_SRC elm
   birthday : { name : String, age : Int, weight : Int } -> Int
@@ -4363,15 +4348,7 @@ However, usually it's a better idea to give the type a name using ~type alias~:
 
 Again, we use ~type alias~ instead of ~type~ because the record type is "complete" on its own.
 
-You can access fields of a record, as above, using ~person.age~ (or similar). You can also destructure it:
-
-#+BEGIN_SRC elm
-  birthday : User -> Int
-  birthday { age } =
-      age + 1
-#+END_SRC
-
-You don't need to destructure every field in the record. You can create a new record by "updating" an existing one:
+You can access fields of a record, as above, using ~person.age~ (or similar). You can also destructure it. You don't need to destructure every field in the record. You can create a new record by "updating" an existing one:
 
 #+BEGIN_SRC elm
   birthday : User -> User
@@ -4383,19 +4360,7 @@ Of course, this doesn't modify ~user~ (that would be a side effect!); it just cr
 
 Now, normally a record type doesn't have/need a constructor. However, it's convenient to have one in certain situations (including decoding JSON), so Elm has a rule that if you have a type alias for a record type, it creates a constructor for it using the name of the alias. In this example, it creates ~User~ which is of type ~String -> Int -> Int -> User~. The first argument is the name, the second the age, etc. in order of declaration.
 **** Let
-There's another new thing here -- the ~let~ expression. These look like:
-
-#+BEGIN_SRC elm
-  let
-      var =
-          expression
-
-      -- ...
-  in
-      anotherExpression var
-#+END_SRC
-
-In other words, the ~let~ expression lets us define several variables for use in subsequent expressions. This is a pretty common feature of functional languages and helps us break up a really large function into smaller pieces.
+This example also uses ~let~ expressions, which let us define several variables for use in subsequent expressions. This is a pretty common feature of functional languages and helps us break up a really large function into smaller pieces.
 
 For unknown reasons, the Elm compiler will not let you create mutually-referential variables in a ~let~ expression. If you need to do this in 0.19, you have to make them module-level definitions.
 *** Forms
