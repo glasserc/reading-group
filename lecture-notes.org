@@ -4491,3 +4491,5 @@ i.e. make the ~id~ field a ~Maybe~. Lots of frameworks take this approach -- Dja
 This way, we can create our ~User~ values without reference to how they would be stored in the database. These are what we would ~insert~. But at the same time, we can talk about ~UserEntity~ values, which *must* have been stored in the database. These two different types make it clear the cases where we will, or will not, have IDs.
 *** Exercise
 Remember the FCC "weather viewer" project? That project used the HTML5 Geolocation API, which we don't have access to in Elm. But let's use https://fcc-weather-api.glitch.me/ to get the current weather for latitude 40.65 and longitude -73.95 (i.e. somewhere in Brooklyn) and then display it.
+** Other resources
+https://www.youtube.com/watch?v=WnTw0z7rD3E - type programming stuff
