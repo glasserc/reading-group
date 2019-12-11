@@ -4493,3 +4493,127 @@ This way, we can create our ~User~ values without reference to how they would be
 Remember the FCC "weather viewer" project? That project used the HTML5 Geolocation API, which we don't have access to in Elm. But let's use https://fcc-weather-api.glitch.me/ to get the current weather for latitude 40.65 and longitude -73.95 (i.e. somewhere in Brooklyn) and then display it.
 ** Other resources
 https://www.youtube.com/watch?v=WnTw0z7rD3E - type programming stuff
+*** Argument order in ML-type languages
+You generally want "this" objects to be at the *end* of the parameter list rather than at the beginning as in OOP languages.
+https://wiki.haskell.org/Parameter_order
+
+You can easily fix the *beginning* of the parameter list. If you know context is going to be static, then it can be helpful to put the context first so you can curry the definition for all time. However, if context is dynamic (and it is, surprisingly often), then you should put it at the end. When this happens, you're implicitly creating a Reader monad, which is why it works so well. (See the "Context" section of the above.)
+
+Sometimes you want to "decorate" functions, doing additional things with the arguments or the return type.
+
+Transforming an argument
+
+For a function of one argument, you can compose functions using >>.
+
+f : a -> b
+swizzle : x -> a
+swizzle >> f : x -> b
+
+transformArg : (a -> b) -> x -> b
+transformArg f =
+  swizzle >> f
+
+For a function of multiple arguments, this still basically works, because of currying/partial application.
+
+f : a -> b -> c -> d
+swizzle : x -> a
+swizzle >> f : x -> b -> c -> d
+transformArg f : x -> b -> c -> d
+
+If you want to transform an argument that isn't the first one, you end up having to write some kind of function to handle all the arguments before the one you want to transform.
+
+swizzle2 : x -> b
+
+transformSecond : (a -> b -> c) -> a -> x -> c
+transformSecond f =
+  \a -> swizzle2 >> (f a)
+
+Or equivalently:
+
+transformSecond f a =
+  swizzle2 >> f a
+
+Of course, you may not even need a decorator or transformed function; if you only have one call site, you can just do
+~f a (swizzle x)~, or you may define swizzle2 as ~x -> (b -> c) -> c~, in which case you can do ~f a |> swizzle x~. This may be an example of "putting the main/this argument last"?
+
+Using the return type
+
+For a function of one argument, you can compose functions using >>.
+
+For a function of multiple arguments, you are basically screwed and have to write your own wrapper depending on how many arguments there are.
+
+f : a -> b
+f >> Debug.toString : a -> String
+
+g : a -> b -> c
+g >> Debug.toString  -- probably not what you want!
+\a b -> g a b |> Debug.toString
+-- or equally
+\a -> g a >> Debug.toString
+
+h : a -> b -> c -> d
+\a b -> h a b >> Debug.toString
+
+In Haskell there's Data.Function which can help with this a little bit, but nothing like that here it seems? FIXME: Does Data.Function even help here? Or do you end up falling back to the Reader monad?
+
+Adding an argument
+
+In the simplest case, this is just ~always~:
+
+x : x
+always x : a -> x
+
+You can also think of it as a special case of transforming the arguments. For example, let's say you have a function of one argument.
+
+f : a -> b
+
+Adding an argument *before* is easy:
+
+always f : c -> a -> b
+
+Adding an argument *after* is just an application of the transform-later-argument pattern above:
+
+g : a -> c -> b
+g a =
+  always (f a)
+
+-- Garbage follows this point
+
+For functions of an argument, you can either add the new parameter *before* the argument or *after*:
+
+-- Before
+decorated1 : c -> a -> b
+decorate1 : (a -> b) -> c -> a -> b
+decorate1 f c =
+  f
+    -- do whatever with c
+    >> ...
+
+-- After
+decorated2 : a -> c -> b
+decorate2 : (a -> b) -> a -> c -> b
+decorate2 f a c =
+  f a
+    -- do whatever with c and result
+    |> ...
+
+
+You can write ~decorate1~ in the style of ~decorate2~ but not the other way around. Is that better?
+
+What happens for a function of two parameters? Putting it after only puts it after the first argument.
+
+g : String -> Bool -> Int
+
+decorate1 g : c -> String -> Bool -> Int
+decorate2 g : String -> c -> Bool -> Int
+
+However, you aren't really limited to these situations either, if you're willing to write "wrapper" functions:
+
+myG : String -> Bool -> c -> Int
+myG s b =
+  decorate (g s b)
+
+Sometimes it's also nice to put "long" arguments, i.e. functions, at the end (or next-to-last if you're going to use it with pipelines).
+** Elm message advice
+- Don't put functions or other non-serializable data in your messages.
+- Your first instinct is for a message to describe what you want to happen. A good message should instead describe what just happened.
