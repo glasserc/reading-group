@@ -4493,6 +4493,7 @@ This way, we can create our ~User~ values without reference to how they would be
 Remember the FCC "weather viewer" project? That project used the HTML5 Geolocation API, which we don't have access to in Elm. But let's use https://fcc-weather-api.glitch.me/ to get the current weather for latitude 40.65 and longitude -73.95 (i.e. somewhere in Brooklyn) and then display it.
 ** Other resources
 https://www.youtube.com/watch?v=WnTw0z7rD3E - type programming stuff
+https://gist.github.com/JoelQ/98c5c6a17fd82d8ddd932a75eceb4276 - Elm types exercises
 *** Argument order in ML-type languages
 You generally want "this" objects to be at the *end* of the parameter list rather than at the beginning as in OOP languages.
 https://wiki.haskell.org/Parameter_order
