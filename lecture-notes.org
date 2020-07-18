@@ -4491,6 +4491,64 @@ i.e. make the ~id~ field a ~Maybe~. Lots of frameworks take this approach -- Dja
 This way, we can create our ~User~ values without reference to how they would be stored in the database. These are what we would ~insert~. But at the same time, we can talk about ~UserEntity~ values, which *must* have been stored in the database. These two different types make it clear the cases where we will, or will not, have IDs.
 *** Exercise
 Remember the FCC "weather viewer" project? That project used the HTML5 Geolocation API, which we don't have access to in Elm. But let's use https://fcc-weather-api.glitch.me/ to get the current weather for latitude 40.65 and longitude -73.95 (i.e. somewhere in Brooklyn) and then display it.
+** Concurrency/parallelism
+First we have the operating system
+Creates processes
+- Processes have distinct address spaces
+- On Unix/Linux fork() [*]
+  - This is the only system call that returns twice
+  - exec("/bin/some-other-program")
+- On Windows CreateProcess()
+- sysvipc (System V Interprocess Communication)
+  - semaphores / mutexes (mutual exclusion)
+- Preemptive multitasking
+  - Cooperative multitasking
+
+Threads
+- Exist within a process
+- Share address space with that process
+- More convenient to communicate
+- More performant to update memory
+
+Multithreaded programming is a nightmare
+- Race conditions
+  - Deadlock
+  - Livelock
+  - Iterator invalidation
+  - [Last write wins???]
+  - [Write tearing???]
+  - Read v writing???
+  - Writing v writing???
+- Reentrancy / thread-safe
+- Atomic
+- Idempotent
+- Protect stuff using mutexes
+- Java `synchronized`
+  - Lets us create "safe" operations
+- Rust makes this easier [*]
+  - Mutability/ownership prevents writing v. other stuff contention
+
+Semaphores and contention
+- Dining philosophers
+
+STM (Software Transactional Memory)
+- Really cool semi-research-y approach to sharing memory in threads
+- "Shared memory" operations which must be pure
+- Can combine into bigger operations
+- When "running" an operation, record all accesses to memory
+- If accesses collided with another thread, abort and retry
+
+Coroutines
+- A way to implement cooperative multitasking
+- Uses language support instead of platform support
+- Can be implemented with generators
+- Also related to async/await
+
+Uses of threading
+- Do multiple things at once
+  - e.g. Generate thumbnails of a bunch of photos while also presenting an interface to a user
+- Parallel processing of stuff
+  - Beware of communication overhead
 ** Other resources
 https://www.youtube.com/watch?v=WnTw0z7rD3E - type programming stuff
 https://gist.github.com/JoelQ/98c5c6a17fd82d8ddd932a75eceb4276 - Elm types exercises
