@@ -4387,13 +4387,13 @@ Write an Elm program similar to the "text fields" example. It should allow the u
 *** Side effects
 We said that because Elm is pure, it forbids side effects. And that's true as far as it goes. But, in the words of [[https://www.youtube.com/watch?v=iSmkqocn0oQ][Simon Peyton Jones]], a programming language with no side effects whatsoever is useless -- it can't read input nor produce output. In particular, there are lots of operations a web application will want to perform that embody side effects. A good example is making an HTTP request. That request can return different results at different times, which is a huge tip-off that it is impure.
 
-Elm offers a mechanism for performing these operations. Like a lot of things in Elm, this mechanism centers around a type. You can call (e.g.) ~Http.get~, which returns a ~Cmd msg~ (or sometimes ~Task~, which is related). If you define your program using ~Browser.element~ instead of ~Browser.sandbox~, you can return this ~Cmd~ from your ~update~ function. When you do this, the Elm runtime will perform the ~Cmd~. Each ~Cmd~ can report its result by producing a message, which is then handled (as normal) using your update function.
+Elm offers a mechanism for performing these operations. Like a lot of things in Elm, this mechanism centers around a type. You can call (e.g.) [[https://package.elm-lang.org/packages/elm/http/latest/Http#get][Http.get]], which returns a ~Cmd msg~ (or sometimes ~Task~, which is related). If you define your program using ~Browser.element~ instead of ~Browser.sandbox~, you can return this ~Cmd~ from your ~update~ function. When you do this, the Elm runtime will perform the ~Cmd~. Each ~Cmd~ can report its result by producing a message, which is then handled (as normal) using your update function.
 
-Although we say that the Elm programming language is pure, what we mean is that you can't write a function that has a side effect. Instead what we do is write a pure function that returns a ~Cmd~, and will always return the same ~Cmd~ given the same output. The Elm "runtime" is responsible for actually performing this side effect. This may seem like sleight-of-hand but it's actually very important because it makes it obvious (and machine-enforceable) which parts of the program can (or cannot) have side effects.
+How is that possible, since we said that the Elm programming language is pure? Doesn't that mean that you can't write a function that has a side effect? We work around this using a technicality. What we do is write a pure function that returns a ~Cmd~, and will always return the same ~Cmd~ given the same input. The Elm "runtime" is responsible for actually performing this side effect. This may seem like sleight-of-hand but it's actually very important and helpful because it makes it obvious (and machine-enforceable) which parts of the program can (or cannot) have side effects. (If a function does not return ~Cmd~, it is pure, no two ways about it.)
 
 An example of making an HTTP request is at https://guide.elm-lang.org/effects/http.html.
 
-Up until now, we've defined types that correspond very closely to our data. For example, when you see ~Maybe Int~, you might think to yourself, "Oh, unless it's ~Nothing~, it has an ~Int~ inside it", and you know that you can pattern match to get the ~Int~ out. Some learners then see ~Cmd Int~, and reason, "Well, it has an ~Int~ inside it. How do I get the ~Int~ out?" You should *not* think "it has an ~Int~ inside it". There is no ~Int~ at all! Instead, a ~Cmd Int~ is sort of like a blueprint or recipe that, if followed, would *produce* an ~Int~. You can't get the ~Int~ out because it isn't there. The only things you can do with it are: return it from ~update~ (so that the Elm runtime will follow the recipe), or use the recipe in a bigger recipe (using e.g. ~Cmd.map~) to produce something else with that ~Int~.
+Up until now, we've defined types that correspond very closely to our data. For example, when you see ~Maybe Int~, you might think to yourself, "Oh, unless it's ~Nothing~, it has an ~Int~ inside it", and you know that you can pattern match to get the ~Int~ out. Some learners then see ~Cmd Int~, and reason, "Well, it has an ~Int~ inside it. How do I get the ~Int~ out?" You should *not* think "it has an ~Int~ inside it". There is no ~Int~ at all! Instead, a ~Cmd Int~ is sort of like a blueprint or recipe that, if followed, would *produce* an ~Int~. You can't get the ~Int~ out because it isn't there. The only things you can do with it are: return it from ~update~ (so that the Elm runtime will follow the recipe), or use the recipe in a bigger recipe (using e.g. ~Cmd.map~) to produce something else with that ~Int~. There's a larger idea here about using types to represent something beyond data that we'll see more of when we talk about JSON.
 *** Demo
 We'll go through the effort of converting Evan's "text input" example into a ~Browser.element~ program.
 *** Parsing JSON
@@ -4406,6 +4406,8 @@ The Elm package for handling JSON is [[https://package.elm-lang.org/packages/elm
 Instead, if you want to decode JSON, you define a ~Decoder~. A ~Decoder a~ is the type of something that takes a JSON value and produces ~a~ (or fails with an error message). There are some basic decoders already defined -- ~string : Decoder String~, ~bool : Decoder Bool~, ~int : Decoder Int~, ~float : Decoder Float~.
 
 You can also retrieve fields from a JSON object using ~field~ or ~at~.
+
+A very simple example of decoding JSON is at https://guide.elm-lang.org/effects/json.html. (This also demonstrates producing ~Cmd~ from your update function, which the last example didn't.)
 
 The real trick is in combining decoders. Let's say you want to decode users like this:
 
@@ -4439,7 +4441,7 @@ We can use any function of type ~String -> String -> User~, but we already have 
 
 Note that we don't have to do anything special to indicate that we want the ~User~ to correspond to an object. If it weren't an object, the ~field~ decoders would fail.
 
-Writing these decoders is kind of tedious, but Evan thinks it's not that big a deal, and doesn't want to commit to any automatic mechanism just yet. There are some libraries that aim to streamline it a little bit: https://package.elm-lang.org/packages/NoRedInk/elm-json-decode-pipeline/latest/ is pretty common, and some people have tried to make it safer by writing both the encode and decode functions at the same time: https://package.elm-lang.org/packages/prozacchiwawa/elm-json-codec/latest/.
+Writing these decoders is kind of tedious, but Evan thinks it's not that big a deal, and doesn't want to commit to any automatic mechanism just yet. There are some libraries that aim to streamline it a little bit: https://package.elm-lang.org/packages/NoRedInk/elm-json-decode-pipeline/latest/ is pretty common, and some people have tried to make it safer by writing both the encode and decode functions at the same time: https://package.elm-lang.org/packages/prozacchiwawa/elm-json-codec/latest/. There's also a library for talking to GraphQL which automatically generates the encoders/decoders. In other words, it's still the wild west.
 *** Modeling
 There's an idea in the ML/Haskell/Elm communities which says "Make illegal states unrepresentable" (attributed to Yaron Minsky). This is a very powerful idea with ramifications throughout how you design your types/data structures.
 
@@ -4490,7 +4492,8 @@ i.e. make the ~id~ field a ~Maybe~. Lots of frameworks take this approach -- Dja
 
 This way, we can create our ~User~ values without reference to how they would be stored in the database. These are what we would ~insert~. But at the same time, we can talk about ~UserEntity~ values, which *must* have been stored in the database. These two different types make it clear the cases where we will, or will not, have IDs.
 *** Exercise
-Remember the FCC "weather viewer" project? That project used the HTML5 Geolocation API, which we don't have access to in Elm. But let's use https://fcc-weather-api.glitch.me/ to get the current weather for latitude 40.65 and longitude -73.95 (i.e. somewhere in Brooklyn) and then display it.
+Remember the FCC "weather viewer" project? That project used the HTML5 Geolocation API, which we don't have access to in Elm. But let's use
+https://fcc-weather-api.glitch.me/ to get the current weather for latitude 40.65 and longitude -73.95 (i.e. somewhere in Brooklyn) and then display it.
 ** Concurrency/parallelism
 First we have the operating system
 Creates processes
@@ -4549,9 +4552,22 @@ Uses of threading
   - e.g. Generate thumbnails of a bunch of photos while also presenting an interface to a user
 - Parallel processing of stuff
   - Beware of communication overhead
+** Hrngh
+- Discuss PRs and PR "culture"
+- Maybe review Pages PR? -- commit by commit maybe? PR #11 has some better "standalone" commits
+- Land and pull bugfix PR
+- Running backend tests (Alex)
+
+src/Main.elm vs Routes?
 ** Other resources
 https://www.youtube.com/watch?v=WnTw0z7rD3E - type programming stuff
 https://gist.github.com/JoelQ/98c5c6a17fd82d8ddd932a75eceb4276 - Elm types exercises
+
+https://tech.allo-media.net/elm/2019/07/16/stateful-components-in-elm.html - Niko's approach to "stateful components" in Elm
+http://tom.preston-werner.com/2009/05/19/the-git-parable.html and https://eagain.net/articles/git-for-computer-scientists/ -- about how Git works
+https://groundlevelmagic.tk/posts/2019-10-24-advanced-elm-codecs/ -- about types and the tools that Elm gives you
+https://discourse.elm-lang.org/t/types-primitive-named-phantom-opaque-custom-state-machines-and-type-driven-design/4680/6
+https://fatbusinessman.com/2019/my-favourite-git-commit - about commit messages
 *** Argument order in ML-type languages
 You generally want "this" objects to be at the *end* of the parameter list rather than at the beginning as in OOP languages.
 https://wiki.haskell.org/Parameter_order
@@ -4676,3 +4692,5 @@ Sometimes it's also nice to put "long" arguments, i.e. functions, at the end (or
 ** Elm message advice
 - Don't put functions or other non-serializable data in your messages.
 - Your first instinct is for a message to describe what you want to happen. A good message should instead describe what just happened.
+** Francis idea
+Maybe to be good at computer programming you have to be comfortable with uncertainty.
